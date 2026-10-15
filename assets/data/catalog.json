@@ -1,0 +1,13 @@
+{
+  "source": "optics-bot/data/products_draft.csv",
+  "products": [
+    { "sku": "CTO430S_001", "brand": "Cartier", "title": "Cartier CT0430S", "type": "Солнцезащитные очки", "price": 195200, "photo": "assets/img/frames/CTO430S_001.jpg" },
+    { "sku": "CTO296S_004", "brand": "Cartier", "title": "Cartier CT0296S", "type": "Солнцезащитные очки", "price": 271600, "photo": "assets/img/frames/CTO296S_004.jpg" },
+    { "sku": "CT0368O_004", "brand": "Cartier", "title": "Cartier CT0368O", "type": "Оправы", "price": 124400, "photo": "assets/img/frames/CT0368O_004.jpg" },
+    { "sku": "CTO550S_001", "brand": "Cartier", "title": "Cartier CT0550S", "type": "Солнцезащитные очки", "price": 195200, "photo": "assets/img/frames/CTO550S_001.jpg" },
+    { "sku": "TF_5641-B_005", "brand": "Tom Ford", "title": "Tom Ford TF 5641-B", "type": "Оправы", "price": 81400, "photo": "assets/img/frames/TF_5641-B_005.jpg" },
+    { "sku": "CTO540S_001", "brand": "Cartier", "title": "Cartier CT0540S", "type": "Солнцезащитные очки", "price": 135100, "photo": "assets/img/frames/CTO540S_001.jpg" },
+    { "sku": "CT0556O_001", "brand": "Cartier", "title": "Cartier CT0556O", "type": "Оправы", "price": 160100, "photo": "assets/img/frames/CT0556O_001.jpg" },
+    { "sku": "TF_1044_01V", "brand": "Tom Ford", "title": "Tom Ford TF 1044", "type": "Солнцезащитные очки", "price": 58500, "photo": "assets/img/frames/TF_1044_01V.jpg" }
+  ]
+}

@@ -1,0 +1,11 @@
+# macOS
+.DS_Store
+
+# Секреты и окружение (для будущего бэкенда)
+.env
+*.bak
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.db
