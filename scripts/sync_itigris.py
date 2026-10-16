@@ -121,6 +121,147 @@ def clean_display_model(model: str) -> str:
     return re.sub(r"\s+", " ", base)
 
 
+def extract_base_model(brand: str, model_raw: str) -> str:
+    """Выделяет базовую модель (без цветового кода) для объединения одинаковых очков из разных бутиков в одну карточку."""
+    b = brand.strip().lower()
+    m = clean_display_model(model_raw)
+
+    if b == "cartier":
+        mc = re.match(r"^(CT\d{4}[A-Z]?)\b", m, flags=re.I)
+        if mc:
+            return mc.group(1).upper()
+
+    if b in ("gucci", "saint laurent", "balenciaga"):
+        return re.sub(r"\s+\d{3}[A-Z]?$", "", m).strip()
+
+    if b in ("prada", "miu miu", "versace"):
+        mp = re.match(r"^([A-Z]{2,4}\s+[A-Z0-9]{2,5}(?:\-[A-Z])?)\b", m, flags=re.I)
+        if mp:
+            return re.sub(r"\s+", " ", mp.group(1)).upper()
+
+    if b == "tom ford":
+        mtf = re.match(r"^(TF\s*\d{3,4}(?:\-[A-Z])?)\b", m, flags=re.I)
+        if mtf:
+            return re.sub(r"\s+", " ", mtf.group(1)).upper()
+
+    if b == "ray-ban":
+        mrb = re.match(r"^((?:RB|RX)\s*\d{4}[A-Z]?)\b", m, flags=re.I)
+        if mrb:
+            return re.sub(r"\s+", " ", mrb.group(1)).upper()
+
+    if b == "linda farrow":
+        mlf = re.match(r"^(LFL[\-\s]*\d{3,4})\b", m, flags=re.I)
+        if mlf:
+            return re.sub(r"[\-\s]+", "-", mlf.group(1)).upper()
+        return re.sub(r"\s+C\d+.*$", "", m, flags=re.I).strip()
+
+    if b == "matsuda":
+        mmt = re.match(r"^([M]?\d{4,5}[A-Z]?(?:[\-\s]+V2)?)\b", m, flags=re.I)
+        if mmt:
+            base = re.sub(r"[\-\s]+", "-", mmt.group(1)).upper()
+            if re.match(r"^[M]?\d{4,5}[A-Z]?\s+SG\b", m, flags=re.I):
+                return f"{base} SG"
+            return base
+
+    if b in ("kaleos eyehunters", "john dalia", "avo", "bosara", "kreuzbergkinder", "zilli", "фиксики"):
+        return re.sub(r"\s+C[\-\.]?\d+.*$", "", m, flags=re.I).strip()
+
+    if b == "lespecs":
+        return re.sub(r"\s+\d{6,8}$", "", m).strip()
+
+    if b == "gast":
+        return re.sub(r"\s+(?:[A-Z]{2,3}\d{2}|\d{2})$", "", m, flags=re.I).strip()
+
+    if b in ("paul smith", "haffmans & neumeister", "spine", "swissflex"):
+        return re.sub(r"\s+\d{2,3}$", "", m).strip()
+
+    if b == "davidoff":
+        mdv = re.match(r"^(DA[PTS]?\s*\d{3})\b", m, flags=re.I)
+        if mdv:
+            return re.sub(r"\s+", " ", mdv.group(1)).upper()
+
+    if b == "hackett london bespoke":
+        mhb = re.match(r"^(HEB\s*\d{3})\b", m, flags=re.I)
+        if mhb:
+            return re.sub(r"\s+", " ", mhb.group(1)).upper()
+
+    if b == "ic! berlin":
+        mib = re.match(r"^([A-Za-z0-9\.\-]+(?:\s+[A-Z]\.)?(?:\s+Large|\s+Small|\s+East)?)", m)
+        if mib:
+            return mib.group(1).strip()
+
+    if b in ("gotti", "brevno", "havaianas"):
+        return m.split()[0]
+
+    if b == "ahlem":
+        mah = re.match(r"^(Saint\s+Benoit|[A-Za-z]+)", m, flags=re.I)
+        if mah:
+            return mah.group(1).strip()
+
+    if b == "lunor":
+        return re.sub(r"\s+(?:PP|AG|GP|AS|SWS|RG|col\.\d+|\d{2}[a-z]?)$", "", m, flags=re.I).strip()
+
+    if b == "kuboraum":
+        mku = re.match(r"^([A-Z]\d{1,3}(?:\s+SG)?)\b", m, flags=re.I)
+        if mku:
+            return mku.group(1).upper()
+
+    if b == "eyerepublic":
+        mer = re.match(r"^(№\s*\d+)", m)
+        if mer:
+            return mer.group(1)
+
+    if b == "retrosuperfuture":
+        parts = m.split()
+        if len(parts) >= 2 and len(parts[0]) == 3 and parts[0].isalnum():
+            if parts[1].lower() == "numero" and len(parts) >= 3:
+                return f"Numero {parts[2]}"
+            return parts[1].capitalize()
+
+    if b == "celine":
+        mcl = re.match(r"^(CL\s*\d{4,5}[A-Z]{1,2})\b", m, flags=re.I)
+        if mcl:
+            return re.sub(r"\s+", " ", mcl.group(1)).upper()
+
+    if b == "trama":
+        mtr = re.match(r"^([A-Z]{2}\d{3,4})\b", m, flags=re.I)
+        if mtr:
+            return mtr.group(1).upper()
+
+    if b == "orgreen":
+        mor = re.sub(r"\s+\d{3,4}(?:\s+\d{2}/\d{2})?$", "", m).strip()
+        if mor:
+            return mor
+
+    if b == "prodesign":
+        mpr = re.match(r"^(\d{4})\b", m)
+        if mpr:
+            return mpr.group(1)
+
+    if b == "plus eyewear":
+        mpl = re.sub(r"\s+[A-Z]\d{4}[A-Z]$", "", m).strip()
+        if mpl:
+            return mpl
+
+    if b == "fakoshima":
+        mfk = re.match(r"^([A-Z]+\s+\d{2})\b", m, flags=re.I)
+        if mfk:
+            return mfk.group(1).upper()
+
+    if b == "gigibarcelona":
+        return re.sub(r"[\-\/]\d+$", "", m).strip()
+
+    m_nocol = re.sub(r"[\s,]+(?:col\.?|c\.|color)\s*[A-Z0-9\-\./]+.*$", "", m, flags=re.I).strip()
+    if m_nocol and len(m_nocol) >= 3:
+        return m_nocol
+
+    if not re.match(r"^Mod\.?\s*\d+$", m, flags=re.I):
+        m_gen = re.sub(r"\s+(?:C[\-\.]?\d{1,3}|\d{3}[A-Z]?)$", "", m, flags=re.I).strip()
+        if len(m_gen) >= 3 and m_gen.upper() != "MOD.":
+            return m_gen
+    return m
+
+
 def format_frame_size(raw: str) -> str:
     """Превращает '140,37,145,20,55' (общая, высота, заушник, мост, линза) в читаемый размер."""
     if not raw:
@@ -433,32 +574,37 @@ def merge_inventory(
         if brand.lower() in excluded_brands:
             continue
 
-        key_norm = norm_sku_key(brand, row["model_raw"])
-        group_key = (row["type"], brand.lower(), key_norm)
+        base_model = extract_base_model(brand, row["model_raw"])
+        group_key = (row["type"], brand.lower(), base_model.upper())
+
+        var_norm = norm_sku_key(brand, row["model_raw"])
+        var_sku = make_safe_sku(brand, row["model_raw"])
+        var_display = clean_display_model(row["model_raw"])
+        var_photo = (
+            by_stem_photo.get(var_sku.lower())
+            or by_norm_photo.get(var_norm)
+            or ""
+        )
+        _, _, extra = row["model_raw"].partition("+")
+        var_note = f"В комплекте: {extra.strip()}" if extra.strip() else ""
+        var_size = format_frame_size(row["size"])
 
         if group_key not in grouped:
-            sku = make_safe_sku(brand, row["model_raw"])
-            display_model = clean_display_model(row["model_raw"])
-            photo = (
-                by_stem_photo.get(sku.lower())
-                or by_norm_photo.get(key_norm)
-                or ""
-            )
             shapes = [
                 s.strip()
                 for s in row["design"].split(",")
                 if s.strip()
             ]
-            _, _, extra = row["model_raw"].partition("+")
             grouped[group_key] = {
-                "sku": sku,
+                "sku": var_sku,
                 "brand": brand,
-                "model": display_model,
+                "baseModel": base_model,
+                "model": var_display,
                 "modelRaw": row["model_raw"],
-                "title": f"{brand} {display_model}".strip(),
+                "title": f"{brand} {var_display}".strip(),
                 "type": row["type"],
                 "price": row["price"],
-                "photo": photo,
+                "photo": var_photo,
                 "boutiques": [],
                 "stock": {"moyka": 0, "petrovsky": 0, "total": 0},
                 "shapes": shapes,
@@ -467,8 +613,9 @@ def merge_inventory(
                 "color": row["color"],
                 "lens": row["lens_type"],
                 "rim": row["rim_type"],
-                "size": format_frame_size(row["size"]),
-                "note": f"В комплекте: {extra.strip()}" if extra.strip() else "",
+                "size": var_size,
+                "note": var_note,
+                "_variants": {},
             }
 
         item = grouped[group_key]
@@ -479,8 +626,59 @@ def merge_inventory(
         item["stock"]["total"] += row["qty"]
         if row["price"] > item["price"]:
             item["price"] = row["price"]
+        if not item["photo"] and var_photo:
+            item["photo"] = var_photo
 
-    products = list(grouped.values())
+        vmap = item["_variants"]
+        if var_norm not in vmap:
+            vmap[var_norm] = {
+                "sku": var_sku,
+                "model": var_display,
+                "modelRaw": row["model_raw"],
+                "price": row["price"],
+                "photo": var_photo,
+                "boutiques": [b_id],
+                "color": row["color"],
+                "lens": row["lens_type"],
+                "size": var_size,
+                "note": var_note,
+            }
+        else:
+            v = vmap[var_norm]
+            if b_id not in v["boutiques"]:
+                v["boutiques"].append(b_id)
+            if row["price"] > v["price"]:
+                v["price"] = row["price"]
+            if not v["photo"] and var_photo:
+                v["photo"] = var_photo
+
+    products: List[Dict[str, Any]] = []
+    for item in grouped.values():
+        # Всегда фиксируем единый порядок бутиков: сначала Мойка, 58, затем Петровский, 22
+        item["boutiques"] = [
+            b for b in ("moyka", "petrovsky") if b in item["boutiques"]
+        ]
+        variants = list(item.pop("_variants").values())
+        for v in variants:
+            v["boutiques"] = [
+                b for b in ("moyka", "petrovsky") if b in v["boutiques"]
+            ]
+            if not v["photo"] and item["photo"]:
+                v["photo"] = item["photo"]
+
+        if len(variants) > 1:
+            item["model"] = item["baseModel"]
+            item["title"] = f"{item['brand']} {item['baseModel']}".strip()
+            all_raw = " / ".join(dict.fromkeys(v["model"] for v in variants))
+            item["modelRaw"] = all_raw
+            all_colors = " / ".join(dict.fromkeys(v["color"] for v in variants if v["color"]))
+            if all_colors:
+                item["color"] = all_colors
+
+        item.pop("baseModel", None)
+        if len(variants) > 1:
+            item["variants"] = variants
+        products.append(item)
 
     # Сортировка: сначала модели с фото, затем по ценности/бренду и цене по убыванию
     products.sort(

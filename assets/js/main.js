@@ -227,7 +227,7 @@ async function initCatalog() {
   const byFamily = new Map();
 
   try {
-    const response = await fetch("assets/data/catalog.json");
+    const response = await fetch("assets/data/catalog.json?v=8");
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     products = (await response.json()).products || [];
   } catch (error) {
@@ -236,16 +236,14 @@ async function initCatalog() {
     return;
   }
 
-  // Если у цветовой вариации нет собственного фото, но у той же модели другого цвета фото уже есть — подставляем фото модели как превью
-  const familyPhoto = new Map();
+  // Индексируем каталог по SKU (включая SKU отдельных цветовых вариаций)
   products.forEach((p) => {
-    const fam = getBaseModelFamily(p);
-    if (!byFamily.has(fam)) byFamily.set(fam, []);
-    byFamily.get(fam).push(p);
-    if (p.photo && !familyPhoto.has(fam)) {
-      familyPhoto.set(fam, p.photo);
-    }
     bySku.set(p.sku, p);
+    (p.variants || []).forEach((v) => {
+      if (v.sku && !bySku.has(v.sku)) {
+        bySku.set(v.sku, p);
+      }
+    });
   });
 
   // Заполняем селект брендов, форм и границы цены
@@ -339,7 +337,10 @@ async function initCatalog() {
     if (state.q) {
       const q = state.q.toLowerCase();
       const shapeRu = (item.shapes || []).map(formatShape).join(" ");
-      const hay = `${item.brand || ""} ${item.model || ""} ${item.modelRaw || ""} ${item.sku || ""} ${item.color || ""} ${item.material || ""} ${item.type || ""} ${item.rim || ""} ${shapeRu}`.toLowerCase();
+      const varHay = (item.variants || [])
+        .map((v) => `${v.model || ""} ${v.modelRaw || ""} ${v.sku || ""} ${v.color || ""}`)
+        .join(" ");
+      const hay = `${item.brand || ""} ${item.model || ""} ${item.modelRaw || ""} ${item.sku || ""} ${item.color || ""} ${item.material || ""} ${item.type || ""} ${item.rim || ""} ${shapeRu} ${varHay}`.toLowerCase();
       const words = q.split(/\s+/).filter(Boolean);
       for (const w of words) {
         if (!hay.includes(w)) return false;
@@ -414,8 +415,11 @@ async function initCatalog() {
         if (cmp !== 0) return cmp;
         return String(a.model || "").localeCompare(String(b.model || ""), "ru");
       }
-      // featured: сначала модели с фото, затем по убыванию цены
+      // featured: сначала модели с фото, затем представленные сразу в двух бутиках, затем по убыванию цены
       if (aHasPhoto !== bHasPhoto) return aHasPhoto - bHasPhoto;
+      const bBout = (b.boutiques || []).length;
+      const aBout = (a.boutiques || []).length;
+      if (bBout !== aBout) return bBout - aBout;
       return (b.price || 0) - (a.price || 0);
     });
 
@@ -580,33 +584,47 @@ async function initCatalog() {
     document.body.classList.remove("modal-open");
   }
 
-  function openProductModal(sku) {
+  function openProductModal(sku, variantIdx = 0) {
     const product = bySku.get(sku);
     if (!product || !modal || !modalBody) return;
 
+    const variants = Array.isArray(product.variants) && product.variants.length > 1 ? product.variants : null;
+    const activeVar = variants ? variants[Math.max(0, Math.min(variantIdx, variants.length - 1))] : null;
+
     const hasMoyka = (product.boutiques || []).includes("moyka");
     const hasPetrovsky = (product.boutiques || []).includes("petrovsky");
-    const preferredBoutique = hasMoyka ? "moyka" : hasPetrovsky ? "petrovsky" : "moyka";
+    const preferredBoutique =
+      activeVar && (activeVar.boutiques || []).length === 1
+        ? activeVar.boutiques[0]
+        : hasMoyka
+          ? "moyka"
+          : hasPetrovsky
+            ? "petrovsky"
+            : "moyka";
 
-    const fam = getBaseModelFamily(product);
-    const siblings = (byFamily.get(fam) || []).filter((s) => s.model !== product.model || s.sku === product.sku);
-    const showVariants = siblings.length > 1;
+    const displayPhoto = (activeVar && activeVar.photo) || product.photo;
+    const displayPrice = (activeVar && activeVar.price) || product.price;
+    const displayModelRaw = (activeVar && (activeVar.modelRaw || activeVar.model)) || product.modelRaw || product.model;
+    const displayColor = (activeVar && activeVar.color) || product.color;
+    const displayLens = (activeVar && activeVar.lens) || product.lens;
+    const displaySize = (activeVar && activeVar.size) || product.size;
+    const displayNote = (activeVar && activeVar.note) || product.note;
 
     const specs = [
-      ["Артикул / модель", product.modelRaw || product.model],
+      ["Артикул / модель", displayModelRaw],
       ["Категория", product.type],
       ["Конструкция", product.rim],
       ["Форма", (product.shapes || []).map(formatShape).join(", ")],
       ["Материал", product.material],
-      ["Цвет", product.color],
-      ["Линзы", product.lens],
-      ["Размер", product.size],
+      ["Цвет", displayColor],
+      ["Линзы", displayLens],
+      ["Размер", displaySize],
       ["Кому", product.audience],
-      ["Особенности", product.note]
+      ["Особенности", displayNote]
     ].filter(([, val]) => val && String(val).trim() !== "");
 
-    const mediaHtml = product.photo
-      ? `<img src="${escapeHtml(product.photo)}" alt="${escapeHtml(product.title)}" />`
+    const mediaHtml = displayPhoto
+      ? `<img src="${escapeHtml(displayPhoto)}" alt="${escapeHtml(product.title)}" />`
       : fallbackSvgHtml(product);
 
     modalBody.innerHTML = `
@@ -618,7 +636,7 @@ async function initCatalog() {
         <div class="pm__body">
           <p class="pm__brand">${escapeHtml(product.brand)}</p>
           <h2 class="pm__title" id="pm-title">${escapeHtml(product.title)}</h2>
-          ${product.price ? `<p class="pm__price">${priceFormat.format(product.price)} ₽</p>` : ""}
+          ${displayPrice ? `<p class="pm__price">${priceFormat.format(displayPrice)} ₽</p>` : ""}
 
           <p class="pm__section-label">Наличие в бутиках Санкт-Петербурга</p>
           <div class="pm__boutiques">
@@ -641,14 +659,15 @@ async function initCatalog() {
           </div>
 
           ${
-            showVariants
-              ? `<p class="pm__section-label">Другие исполнения этой модели (${siblings.length})</p>
+            variants
+              ? `<p class="pm__section-label">Исполнения в наличии (${variants.length})</p>
                  <div class="pm__variants">
-                   ${siblings
-                     .map(
-                       (sib) =>
-                         `<button type="button" class="pm__variant ${sib.sku === product.sku ? "is-active" : ""}" data-pm-sku="${escapeHtml(sib.sku)}">${escapeHtml(sib.model)}</button>`
-                     )
+                   ${variants
+                     .map((v, idx) => {
+                       const bNames = (v.boutiques || []).map((b) => BOUTIQUE_NAMES[b] || b).join(" · ");
+                       const label = bNames ? `${v.model} (${bNames})` : v.model;
+                       return `<button type="button" class="pm__variant ${idx === variantIdx ? "is-active" : ""}" data-pm-var-idx="${idx}">${escapeHtml(label)}</button>`;
+                     })
                      .join("")}
                  </div>`
               : ""
@@ -685,8 +704,11 @@ async function initCatalog() {
     modal.setAttribute("aria-hidden", "false");
     document.body.classList.add("modal-open");
 
-    modalBody.querySelectorAll("[data-pm-sku]").forEach((btn) => {
-      btn.addEventListener("click", () => openProductModal(btn.dataset.pmSku));
+    modalBody.querySelectorAll("[data-pm-var-idx]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idx = parseInt(btn.dataset.pmVarIdx, 10) || 0;
+        openProductModal(product.sku, idx);
+      });
     });
 
     const bookBtn = modalBody.querySelector("[data-pm-book]");
@@ -723,7 +745,7 @@ async function initCatalog() {
     });
   }
 
-  render();
+  resetAllFilters();
 }
 
 function initBookingLinks() {
