@@ -175,7 +175,7 @@ function productHtml(product, order) {
     .map((b) => `<span class="product__badge">${escapeHtml(BOUTIQUE_NAMES[b] || b)}</span>`)
     .join("");
   const mediaInner = product.photo
-    ? `<img src="${escapeHtml(product.photo)}" alt="${escapeHtml(product.title)}" loading="lazy" />`
+    ? `<img src="${escapeHtml(product.photo)}?v=11" alt="${escapeHtml(product.title)}" loading="lazy" />`
     : fallbackSvgHtml(product);
 
   return `
@@ -227,7 +227,7 @@ async function initCatalog() {
   const byFamily = new Map();
 
   try {
-    const response = await fetch("assets/data/catalog.json?v=10");
+    const response = await fetch("assets/data/catalog.json?v=11");
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     products = (await response.json()).products || [];
   } catch (error) {
@@ -608,7 +608,7 @@ async function initCatalog() {
     ].filter(([, val]) => val && String(val).trim() !== "");
 
     const mediaHtml = product.photo
-      ? `<img src="${escapeHtml(product.photo)}" alt="${escapeHtml(product.title)}" />`
+      ? `<img src="${escapeHtml(product.photo)}?v=11" alt="${escapeHtml(product.title)}" />`
       : fallbackSvgHtml(product);
 
     modalBody.innerHTML = `

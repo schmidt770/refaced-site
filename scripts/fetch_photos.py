@@ -401,18 +401,114 @@ def download_bytes(url: str) -> Optional[bytes]:
         return None
 
 
+def strip_accents(s: str) -> str:
+    return (
+        s.replace("é", "e")
+        .replace("è", "e")
+        .replace("ê", "e")
+        .replace("ë", "e")
+        .replace("É", "E")
+        .replace("È", "E")
+        .replace("ö", "o")
+        .replace("Ö", "O")
+        .replace("ü", "u")
+        .replace("Ü", "U")
+        .replace("ä", "a")
+        .replace("Ä", "A")
+    )
+
+
 def has_token(text: str, token: str) -> bool:
     """Проверяет вхождение токена как отдельного слова/числа (чтобы '01' не матчил '010', а '889' не матчил '1889')."""
     if not token:
         return False
-    pat = r"(?<![a-z0-9])" + re.escape(token.lower()) + r"(?![a-z0-9])"
-    return bool(re.search(pat, text.lower()))
+    t_clean = strip_accents(token.lower())
+    txt_clean = strip_accents(text.lower())
+    pat = r"(?<![a-z0-9])" + re.escape(t_clean) + r"(?![a-z0-9])"
+    return bool(re.search(pat, txt_clean))
+
+
+EUROOPTICA_SKU_PREFIXES: Dict[str, Tuple[str, ...]] = {
+    "mykita": ("myk ", "mykita"),
+    "gotti": ("got ", "gotti"),
+    "andy wolf": ("anw ", "andy"),
+    "blackfin": ("blf ", "bf", "blackfin"),
+    "paul smith": ("psm ", "psop", "pssun", "paul"),
+    "ic! berlin": ("icb ", "ic!", "ic-berlin", "ic berlin"),
+    "cazal": ("caz ", "cazal", "mod"),
+    "silhouette": ("slh ", "silhouette", "tma"),
+    "prodesign": ("prd ", "prodesign"),
+    "masunaga": ("msng", "masunaga", "gms"),
+    "matsuda": ("mts ", "matsuda", "m3", "m2", "m1", "m5", "10", "28"),
+    "cutler and gross": ("cg", "cutler", "gfsn"),
+    "linda farrow": ("lfl", "linda"),
+}
+
+OTHER_BRAND_MARKERS: Dict[str, Tuple[str, ...]] = {
+    "dior": ("cd40", "dior", "30montaigne", "diorsignature", "diorblacksuit"),
+    "celine": ("cl40", "cl50", "celine"),
+    "gigi studios": ("gigi studios", "gigi-studios"),
+    "jacques marie mage": ("jacques marie mage", "jacques-marie-mage"),
+    "serengeti": ("serengeti",),
+    "jf rey": ("jf rey", "jfr jf"),
+    "kreuzbergkinder": ("kk jane", "kreuzbergkinder"),
+}
+
+
+def is_valid_brand_record(brand: str, r: Dict[str, Any]) -> bool:
+    """Строгая проверка, что запись из кэша действительно принадлежит бренду (без примеси рекомендаций и чужих брендов)."""
+    b_low = brand.strip().lower()
+    title_low = strip_accents(str(r.get("title") or "").lower())
+    handle_low = strip_accents(str(r.get("handle") or "").lower())
+    vsku_low = strip_accents(str(r.get("var_sku") or "").lower().strip())
+    vtitle_low = strip_accents(str(r.get("var_title") or "").lower())
+    vendor_low = strip_accents(str(r.get("vendor") or "").lower())
+    img_low = str(r.get("img") or "").lower()
+    src_low = str(r.get("source") or "").lower()
+
+    # 1. GoodSeeCo имеет формат title "Brand - Model (Color)"
+    if "goodseeco.com" in src_low and " - " in title_low:
+        gs_brand = norm_alnum(title_low.split(" - ", 1)[0])
+        b_norm = norm_alnum(b_low.replace("eyehunters", ""))
+        if b_norm and b_norm not in gs_brand and gs_brand not in b_norm:
+            return False
+
+    # 2. Проверка на явные маркеры чужих брендов в SKU/title/URL картинки
+    blob_check = f"{title_low} {vsku_low} {vtitle_low} {vendor_low} {img_low}"
+    for other_b, markers in OTHER_BRAND_MARKERS.items():
+        if other_b != b_low:
+            if any(m in blob_check for m in markers):
+                return False
+
+    # 3. Защита от чужих префиксов SKU EuroOptica (например GOT / KK / JFR внутри Ic! Berlin)
+    if vsku_low.startswith(("got ", "anw ", "blf ", "psm ", "myk ", "kk ", "jfr ", "msng-")):
+        allowed_prefixes = EUROOPTICA_SKU_PREFIXES.get(b_low, ())
+        if not allowed_prefixes or not vsku_low.startswith(allowed_prefixes):
+            return False
+
+    # 4. Защита от HTML-скрапинга блока "You May Also Like" на FashionEyewear / EuroOptica
+    if src_low in ("https://www.fashioneyewear.com", "https://www.eurooptica.com"):
+        if "fashioneyewear.com" in src_low and vsku_low:
+            # На FashionEyewear у карусели рекомендаций var_sku — это полный баркод другой модели (CD40231I..., CL40347U...)
+            sku_head = norm_alnum(vsku_low)[:6]
+            if sku_head and sku_head not in norm_alnum(handle_low + " " + title_low):
+                return False
+        if "eurooptica.com" in src_low:
+            # На EuroOptica handle страницы должен перекликаться с var_sku или URL картинки
+            b_words = set(re.findall(r"[a-z0-9]+", b_low)) | {"eyeglasses", "sunglasses", "optical", "frames", "men", "women", "unisex"}
+            h_tokens = [t for t in re.findall(r"[a-z0-9]+", handle_low) if len(t) >= 3 and t not in b_words]
+            if h_tokens:
+                sku_img_blob = norm_alnum(vsku_low + " " + img_low)
+                if not any(ht in sku_img_blob for ht in h_tokens):
+                    return False
+
+    return True
 
 
 def match_record_for_item(item: Dict[str, Any], records: List[Dict[str, Any]]) -> Optional[str]:
     """
-    Ищет точное совпадение модели И цвета в выгруженных записях Shopify для данного бренда.
-    Возвращает URL картинки только при совпадении И модели, И цветового кода/описания.
+    Ищет 100% точное совпадение БРЕНДА, МОДЕЛИ И КОДА ЦВЕТА/ЛИНЗЫ в записях для данного бренда.
+    Никаких угадываний по словесному цвету при наличии артикула цвета и никаких частичных кодов.
     """
     brand = item["brand"].strip()
     b_low = brand.lower()
@@ -421,28 +517,32 @@ def match_record_for_item(item: Dict[str, Any], records: List[Dict[str, Any]]) -
     color_ru = item.get("color", "")
     en_colors = english_color_keywords(color_ru)
 
+    valid_records = [r for r in records if is_valid_brand_record(brand, r)]
+    if not valid_records:
+        return None
+
     def rec_blob(r: Dict[str, Any]) -> str:
-        return f"{r['title']} | {r['handle']} | {r['var_sku']} | {r['var_title']} | {r['tags']}".lower()
+        return strip_accents(f"{r['title']} | {r['handle']} | {r['var_sku']} | {r['var_title']}".lower())
 
     # 1. LeSpecs: 7-значный артикул цвета (например, ENTANGLE 1926570 -> LWF1926570 / LSU1926570)
     if b_low == "lespecs":
         m_sku = re.search(r"\b(\d{7})\b", m_up)
         if m_sku:
             code7 = m_sku.group(1)
-            for r in records:
+            for r in valid_records:
                 if code7 in r["var_sku"] or code7 in r["handle"] or code7 in r["title"]:
                     return r["img"]
             return None
-        # Если 7-значного кода нет (например, BANDWAGON, OUTTA LOVE), требуем точное имя модели + английский цвет
+        # Если 7-значного кода нет в названии модели (например, BANDWAGON, OUTTA LOVE), требуем точное имя модели + английский цвет
         base_name = re.sub(r"\b\d+\b", "", m_up).strip().lower()
         if len(base_name) >= 4 and en_colors:
-            for r in records:
+            for r in valid_records:
                 t_low = r["title"].lower()
-                if base_name in t_low and any(has_token(t_low + " " + r["var_title"].lower(), c) for c in en_colors):
+                if has_token(t_low, base_name) and any(has_token(t_low + " " + r["var_title"].lower(), c) for c in en_colors):
                     return r["img"]
         return None
 
-    # 2. Kaleos Eyehunters: "Unwin Big C-002" -> title начинается с "Unwin Big", а var_sku кончается на "02" или цвет в title
+    # 2. Kaleos Eyehunters: "Unwin Big C-002" -> точное имя модели + SKU кончается на 2-значный код цвета ("02") или "c-002"
     if "kaleos" in b_low:
         m_kal = re.match(r"^(.+?)\s+C-?0*(\d{1,3})\b", model, flags=re.I)
         if m_kal:
@@ -450,77 +550,74 @@ def match_record_for_item(item: Dict[str, Any], records: List[Dict[str, Any]]) -
             c_num = int(m_kal.group(2))
             c_2d = f"{c_num:02d}"
             c_code = f"c-{c_num:03d}"
-            for r in records:
-                t_low = r["title"].lower()
-                sku_low = r["var_sku"].lower()
-                if t_low.startswith(m_name) or has_token(t_low, m_name):
-                    if sku_low.endswith(c_2d) or c_code in rec_blob(r):
+            for r in valid_records:
+                t_low = r["title"].strip().lower()
+                sku_low = r["var_sku"].strip().lower()
+                # Граница слова обязательна, чтобы "Moon" не матчил "Mooney"
+                if t_low == m_name or t_low.startswith(m_name + " ") or has_token(t_low, m_name):
+                    if not t_low.startswith(m_name) or (len(t_low) > len(m_name) and t_low[len(m_name)].isalnum()):
+                        continue
+                    if (re.fullmatch(r"[a-z]\d{6}", sku_low) and sku_low.endswith(c_2d)) or has_token(rec_blob(r), c_code):
                         return r["img"]
-            if en_colors:
-                for r in records:
-                    t_low = r["title"].lower()
-                    if t_low.startswith(m_name + " ") or t_low == m_name:
-                        if any(has_token(t_low, ec) for ec in en_colors):
-                            return r["img"]
         return None
 
-    # 3. RETROSUPERFUTURE: 3-буквенный/цифровой код варианта в начале ("B3L Amata Black" -> var_sku == "B3L")
+    # 3. RETROSUPERFUTURE: строго 3-символьный код варианта ("B3L Amata Black" -> var_sku == "B3L")
     if b_low == "retrosuperfuture":
         m_rsf = re.match(r"^([A-Z0-9]{3})\s+(.+)$", m_up)
         if m_rsf:
             code3 = m_rsf.group(1).lower()
-            rest_name = re.sub(r"\b\d{2}\b$", "", m_rsf.group(2)).strip().lower()
-            for r in records:
-                if r["var_sku"].strip().lower() == code3:
-                    return r["img"]
-            for r in records:
-                blob = rec_blob(r)
-                if has_token(blob, code3) or (len(rest_name) >= 6 and rest_name in blob):
+            for r in valid_records:
+                if r["var_sku"].strip().lower() == code3 or has_token(r["var_sku"].lower(), code3):
                     return r["img"]
         return None
 
-    # 4. Matsuda: "2809H-V2-AG-BGN", "2809H-V2-SG-BRTM-BOR", "M3169 SG AG", "M3169 SG AS"
+    # 4. Matsuda: "2809H-V2-AG-BGN", "M3169 SG AG", "M3123 SG RTM-MBK,55"
     if b_low == "matsuda":
-        m_clean = re.sub(r"\b\d{2}[/-]\d{2}(?:[/-]\d{3})?\b", "", m_up).strip()
+        m_clean = re.sub(r"(?:[, ]\s*\d{2}|\b\d{2}[/-]\d{2}(?:[/-]\d{3})?)\b", "", m_up).strip()
         m_base = re.match(r"^([A-Z0-9]+(?:-V\d+)?)", m_clean)
         if not m_base:
             return None
         base_code = m_base.group(1).lower()
         rest = m_clean[m_base.end():].strip(" -")
+        is_sg = bool(re.search(r"\bSG\b", m_up))
+        is_rx = bool(re.search(r"\bRX\b", m_up))
         rest_tokens = [
             t.lower()
-            for t in re.split(r"[\s-]+", rest)
+            for t in re.split(r"[\s,-]+", rest)
             if t and t.upper() not in ("SG", "RX", "OPT", "SUN", "V2", "I", "II") and not re.fullmatch(r"\d{2}", t)
         ]
-        if not rest_tokens and en_colors:
-            rest_tokens = en_colors[:2]
         if not rest_tokens:
             return None
-        best_img = None
-        best_score = 0
-        for r in records:
+        for r in valid_records:
             blob = rec_blob(r)
             if not has_token(blob, base_code):
                 continue
-            matched = sum(1 for tok in rest_tokens if has_token(blob, tok))
-            if matched == len(rest_tokens) and matched > best_score:
-                best_score = matched
-                best_img = r["img"]
-        return best_img
+            # Не путаем M3023 с M3023-V2
+            if "-v2" not in base_code and f"{base_code}-v2" in blob:
+                continue
+            if is_sg and "rx" in blob and "sg" not in blob and "sun" not in blob:
+                continue
+            if is_rx and "sg" in blob and "rx" not in blob and "optical" not in blob:
+                continue
+            if all(has_token(blob, tok) for tok in rest_tokens):
+                return r["img"]
+        return None
 
     # 5. Cazal: "Mod. 889 col. 002", "Mod. 757/3 col.002", "Mod. 683/3 col.003"
     if b_low == "cazal":
-        m_mod = re.search(r"(?:MOD\.?\s*)?(\d{3,4})(?:/\d+)?", m_up)
+        m_mod = re.search(r"(?:MOD\.?\s*)?0*(\d{3,4})(?:/\d+)?", m_up)
         m_col = re.search(r"(?:COL\.?\s*|C\.?\s*)(\d{3})\b", m_up)
         if not m_col:
             m_col = re.search(r"\b(\d{3})\b(?!.*\b\d{3}\b)", m_up)
         if m_mod and m_col:
             mod_num = m_mod.group(1).lower()
             col_num = m_col.group(1).lower()
-            for r in records:
+            for r in valid_records:
                 t_blob = f"{r['title']} {r['handle']}".lower()
                 v_blob = f"{r['var_sku']} {r['var_title']} {r['title']} {r['handle']}".lower()
-                if has_token(t_blob, mod_num) and (has_token(v_blob, col_num) or f"{mod_num}{col_num}" in norm_alnum(v_blob)):
+                if (has_token(t_blob, mod_num) or has_token(t_blob, f"0{mod_num}")) and (
+                    has_token(v_blob, col_num) or f"{mod_num}{col_num}" in norm_alnum(v_blob)
+                ):
                     return r["img"]
         return None
 
@@ -533,7 +630,7 @@ def match_record_for_item(item: Dict[str, Any], records: List[Dict[str, Any]]) -
         base_part = re.sub(r"\bLFL[-\s]*", "", m_up[:m_c.start()]).strip().lower()
         if not base_part:
             return None
-        for r in records:
+        for r in valid_records:
             blob = rec_blob(r)
             sku_norm = norm_alnum(r["var_sku"] + " " + r["handle"] + " " + r["title"])
             if has_token(blob, base_part) or f"lfl{base_part}" in sku_norm:
@@ -557,26 +654,32 @@ def match_record_for_item(item: Dict[str, Any], records: List[Dict[str, Any]]) -
         color_part = model[len(m_name):].strip().lower()
         color_words = [w for w in re.split(r"[\s/,-]+", color_part) if len(w) >= 4 and w not in ("rim", "sun", "opt")]
         if not color_words:
-            color_words = en_colors
-        if not color_words:
             return None
-        for r in records:
-            t_low = r["title"].lower()
-            v_low = f"{r['var_title']} {r['title']}".lower()
-            if m_name in t_low and all(w in v_low for w in color_words[:2]):
+        is_opt_item = item.get("type") == "Оправы" or "OPT" in m_up
+        for r in valid_records:
+            if is_opt_item and r["var_sku"].upper().startswith(("SM", "SA")):
+                continue
+            t_low = strip_accents(r["title"].lower())
+            v_low = strip_accents(f"{r['var_title']} {r['title']}".lower())
+            if has_token(t_low, m_name) and all(has_token(v_low, w) for w in color_words[:2]):
                 return r["img"]
         return None
 
-    # 8. Eyepetizer: "Colonial C.1-OP-26", "Odaiba C.1-65", "Odaiba C.6-OP-63"
+    # 8. Eyepetizer: "Colonial C.1-OP-26", "Odaiba C.1-65", "Odaiba C.6-OP-63" -> строго полный код C.1-65!
     if b_low == "eyepetizer":
         m_ep = re.match(r"^([A-Za-z]+)\s+(?:OPT\s+)?C\.?([A-Z0-9-]+)", m_up)
         if m_ep:
             m_name = m_ep.group(1).lower()
             c_full = m_ep.group(2).lower()
-            c_short = c_full.split("-")[0]
-            for r in records:
+            c_norm = norm_alnum(f"c{c_full}")
+            for r in valid_records:
                 blob = rec_blob(r)
-                if has_token(blob, m_name) and (f"c.{c_full}" in blob or f"c.{c_short}" in blob or f"c-{c_short}" in blob):
+                if has_token(blob, m_name) and (
+                    f"c.{c_full}" in blob
+                    or f"c-{c_full}" in blob
+                    or f"c {c_full}" in blob
+                    or c_norm in norm_alnum(blob)
+                ):
                     return r["img"]
         return None
 
@@ -585,20 +688,26 @@ def match_record_for_item(item: Dict[str, Any], records: List[Dict[str, Any]]) -
         m_jd = re.match(r"^([A-Za-z0-9]+)\s+(C\d{3})\b", m_up)
         if m_jd:
             m_name, c_code = m_jd.group(1).lower(), m_jd.group(2).lower()
-            for r in records:
+            for r in valid_records:
                 blob = rec_blob(r)
                 if has_token(blob, m_name) and has_token(blob, c_code):
                     return r["img"]
         return None
 
-    # 10. Cutler and Gross: "CGOP 1405-47-02", "CGSN 1396-52-02"
+    # 10. Cutler and Gross: "CGOP 1405-47-02", "CGSN 1396-52-02", "CGOP 1394-55-13", "GFSN 003-53-T5"
     if b_low == "cutler and gross":
-        m_cg = re.search(r"\b(\d{4})[-\s]+\d{2}[-\s]+(\d{2})\b", m_up)
+        m_cg = re.search(r"^(?:([A-Z]{2}(?:OP|SN))\s+)?0*(\d{3,4})[-\s]+\d{2}[-\s]+([A-Z0-9]{2})\b", m_up)
         if m_cg:
-            mod4, col2 = m_cg.group(1), m_cg.group(2)
-            for r in records:
-                blob = rec_blob(r)
-                if has_token(blob, mod4) and (f"-{col2}" in blob or has_token(blob, col2)):
+            pref_cg = (m_cg.group(1) or "").lower()
+            mod4 = m_cg.group(2).lower()
+            col2 = m_cg.group(3).lower()
+            for r in valid_records:
+                v_str = f"{r['var_sku']} {r['title']} {r['handle']}".lower()
+                if pref_cg and pref_cg.endswith("sn") and ("op-" in v_str or "opticals" in v_str):
+                    continue
+                if pref_cg and pref_cg.endswith("op") and ("sn-" in v_str or "sunglasses" in v_str):
+                    continue
+                if re.search(r"\b0*" + re.escape(mod4) + r"[-\s]+\d{2}[-\s]+" + re.escape(col2) + r"\b", v_str):
                     return r["img"]
         return None
 
@@ -608,36 +717,73 @@ def match_record_for_item(item: Dict[str, Any], records: List[Dict[str, Any]]) -
         if len(tokens) >= 2:
             mod_tok = tokens[0].lower()
             col_toks = [t.lower() for t in tokens[1:] if not re.fullmatch(r"\d{2}/\d{2}", t)]
-            for r in records:
+            for r in valid_records:
                 blob = rec_blob(r)
                 if has_token(blob, mod_tok) and col_toks and all(has_token(blob, c) for c in col_toks[:2]):
                     return r["img"]
         return None
 
-    # 12. MYKITA: "CANYON, col.301", "CANYON, col.325", "Edison col. 255", "Reeves col.712"
+    # 11b. Dita: "DTX506-50-02 RGD", "MACH EIGHT DTS400-A-02", "METAMAT DTS526-59-02 RGD"
+    if b_low == "dita":
+        m_dita = re.search(r"\b(DT[A-Z]?\d{3,4}|DRX-\d{4}[A-Z]?|DLX\s*\d{3})(?:[-\s]+(\d{2}|[A-Z]))?(?:[-\s]+(\d{2}|[A-Z]{2,3}))?", m_up)
+        if m_dita:
+            base_d = norm_alnum(m_dita.group(1))
+            g2 = (m_dita.group(2) or "").lower()
+            g3 = (m_dita.group(3) or "").lower()
+            # Код цвета у Dita — это обычно 01/02/03 во 2-й или 3-й группе
+            col_d = g3 if (g2.isdigit() and int(g2) >= 45 and g3) else (f"{g2}-{g3}" if g2 and g3 else g2)
+            for r in valid_records:
+                v_blob = f"{r['var_sku']} {r['handle']} {r['title']}".lower()
+                if base_d in norm_alnum(v_blob) and col_d and has_token(v_blob, col_d):
+                    return r["img"]
+        return None
+
+    # 11c. Leisure Society: "LEpine 12K Silver", "Meursault 12K WHT GOLD"
+    if b_low == "leisure society":
+        parts = m_up.split()
+        if len(parts) >= 2:
+            m_name = norm_alnum(parts[0])
+            rest_up = " ".join(parts[1:])
+            for r in valid_records:
+                t_norm = norm_alnum(strip_accents(r["title"]))
+                v_blob = strip_accents(f"{r['var_title']} {r['var_sku']}".lower())
+                if m_name in t_norm:
+                    if "12K" in rest_up and "SILVER" in rest_up and "12k" in v_blob and ("silver" in v_blob or "slv" in v_blob):
+                        return r["img"]
+                    if "12K" in rest_up and "WHT" in rest_up and "12k" in v_blob and ("white gold" in v_blob or "whtgld" in v_blob):
+                        return r["img"]
+        return None
+
+    # 11d. Masunaga: "Orchid 41", "Empire 1 35", "Chord A 41", "GMS109 13"
+    if b_low == "masunaga":
+        parts = [p.lower() for p in m_up.split() if p]
+        if len(parts) >= 2:
+            for r in valid_records:
+                blob = rec_blob(r)
+                if all(has_token(blob, p) for p in parts):
+                    return r["img"]
+        return None
+
+    # 12. MYKITA: "CANYON, col.301", "CANYON, col.325", "Edison col. 255", "Reeves col.712" -> строго по коду col.XXX!
     if b_low == "mykita":
         m_clean = re.sub(r",?\s*(?:col\.?|c\.)\s*([a-z0-9]+).*$", "", model, flags=re.I).strip().lower()
         m_col = re.search(r"(?:col\.?|c\.)\s*([a-z0-9]+)", model, flags=re.I)
         col_code = m_col.group(1).lower() if m_col else ""
-        if not m_clean:
+        if not m_clean or not col_code:
             return None
-        if col_code:
-            for r in records:
-                blob = rec_blob(r)
-                sku_norm = norm_alnum(r["var_sku"])
-                if has_token(blob, m_clean):
-                    if (
-                        has_token(blob, col_code)
-                        or has_token(blob, f"c{col_code}")
-                        or f"{norm_alnum(m_clean)}{col_code}" in sku_norm
-                        or f"{norm_alnum(m_clean)}c{col_code}" in sku_norm
-                    ):
-                        return r["img"]
-        if en_colors:
-            for r in records:
-                t_low = f"{r['title']} {r['handle']}".lower()
-                v_low = f"{r['var_title']} {r['var_sku']} {r['title']}".lower()
-                if has_token(t_low, m_clean) and any(has_token(v_low, ec) for ec in en_colors):
+        col_padded = col_code.zfill(3) if col_code.isdigit() else col_code
+        for r in valid_records:
+            blob = rec_blob(r)
+            sku_norm = norm_alnum(r["var_sku"])
+            if has_token(blob, m_clean):
+                if (
+                    has_token(blob, col_code)
+                    or has_token(blob, col_padded)
+                    or has_token(blob, f"c{col_code}")
+                    or has_token(blob, f"c{col_padded}")
+                    or f"{norm_alnum(m_clean)}{col_padded}" in sku_norm
+                    or f"{norm_alnum(m_clean)}c{col_padded}" in sku_norm
+                ):
                     return r["img"]
         return None
 
@@ -653,13 +799,13 @@ def match_record_for_item(item: Dict[str, Any], records: List[Dict[str, Any]]) -
             m_ct = re.search(r"(CT\s*\d{4}[SO]?)", m_trim)
             mod_codes = [norm_alnum(m_ct.group(1))] if m_ct else [norm_alnum(" ".join(parts[:-1]))]
         elif b_low == "gucci":
-            m_gg = re.search(r"(GG\s*\d{4}[SO]?)", m_trim)
+            m_gg = re.search(r"(GG\s*\d{4}[A-Z]{0,2})", m_trim)
             mod_codes = [norm_alnum(m_gg.group(1))] if m_gg else [norm_alnum(" ".join(parts[:-1]))]
         elif b_low == "saint laurent":
             m_sl = re.search(r"(SL\s*[A-Z]?\d{2,4}[A-Z]?)", m_trim)
             mod_codes = [norm_alnum(m_sl.group(1))] if m_sl else [norm_alnum(" ".join(parts[:-1]))]
         elif b_low == "tom ford":
-            m_tf = re.search(r"(?:TF|FT)\s*(\d{3,4}(?:-B)?)", m_trim)
+            m_tf = re.search(r"(?:TF|FT)\s*0*(\d{3,4}(?:-B)?)", m_trim)
             if m_tf:
                 num = norm_alnum(m_tf.group(1))
                 mod_codes = [f"tf{num}", f"ft{num}", f"tf0{num}", f"ft0{num}"]
@@ -671,40 +817,53 @@ def match_record_for_item(item: Dict[str, Any], records: List[Dict[str, Any]]) -
         else:
             mod_codes = [norm_alnum(" ".join(parts[:-1]))]
 
-        for r in records:
+        # Строго требуем совпадения И кода модели, И кода цвета (никакого fallback по английским словам цвета!)
+        is_sl_opt = b_low == "saint laurent" and "OPT" in parts
+        for r in valid_records:
+            if is_sl_opt:
+                src_title = f"{r.get('source','')} {r['title']} {r['handle']}".lower()
+                if "sunglasses" in src_title and "opt" not in r["title"].lower() and "eyeglasses" not in src_title:
+                    continue
             blob = rec_blob(r)
             blob_norm = norm_alnum(blob)
             if any(mc in blob_norm for mc in mod_codes):
                 if has_token(blob, col_code) or any(f"{mc}{norm_alnum(col_code)}" in blob_norm for mc in mod_codes):
                     return r["img"]
-        # Если числовой код цвета (например, 001 -> Black) не указан в карточке магазина, проверяем совпадение английского цвета
-        if en_colors and b_low != "cartier":
-            for r in records:
-                blob = rec_blob(r)
-                blob_norm = norm_alnum(blob)
-                if any(mc in blob_norm for mc in mod_codes) and any(has_token(blob, ec) for ec in en_colors):
-                    return r["img"]
         return None
 
     # 14. Prada & Miu Miu: "SPR C53 1BC-70B", "VPR A55 1AB-1O1", "SMU 54Y 1BC-10F"
     if b_low in ("prada", "miu miu"):
-        m_pm = re.match(r"^([SV]?(?:PR|MU))\s*([A-Z0-9]{2,4})\s+([A-Z0-9]{3})(?:-[A-Z0-9]+)?", m_up)
+        m_pm = re.match(r"^([SV]?(?:PR|MU))\s*([A-Z0-9]{2,4})\s+([A-Z0-9]{3})(?:-([A-Z0-9]{3}))?", m_up)
         if m_pm:
-            prefix, code, col3 = m_pm.group(1), m_pm.group(2).lower(), m_pm.group(3).lower()
+            prefix = m_pm.group(1)
+            code = m_pm.group(2).lower()
+            col_frame = m_pm.group(3).lower()
+            col_lens = (m_pm.group(4) or "").lower()
+            # Оптическая оправа (VPR / VMU) не должна матчить солнцезащитные очки (SPR / SMU) и наоборот!
+            is_opt = prefix.startswith("V")
             if b_low == "prada":
-                aliases = [f"spr{code}", f"vpr{code}", f"pr{code}s", f"pr{code}v", f"pr{code}", f"0pr{code}"]
+                aliases = [f"vpr{code}", f"pr{code}v", f"0pr{code}v"] if is_opt else [f"spr{code}", f"pr{code}s", f"0pr{code}s"]
+                forbid = ("spr", f"pr{code}s", "sunglasses") if is_opt else ("vpr", f"pr{code}v", "eyeglasses", "optical")
             else:
-                aliases = [f"smu{code}", f"vmu{code}", f"mu{code}s", f"mu{code}v", f"mu{code}", f"0mu{code}"]
-            for r in records:
+                aliases = [f"vmu{code}", f"mu{code}v", f"0mu{code}v"] if is_opt else [f"smu{code}", f"mu{code}s", f"0mu{code}s"]
+                forbid = ("smu", f"mu{code}s", "sunglasses") if is_opt else ("vmu", f"mu{code}v", "eyeglasses", "optical")
+
+            # В Prada/Miu Miu 0 и O в коде линзы (1O1 vs 101) часто взаимозаменяемы в каталогах
+            full_cols = set()
+            if col_lens:
+                for l_var in {col_lens, col_lens.replace("o", "0"), col_lens.replace("0", "o")}:
+                    full_cols.add(f"{col_frame}-{l_var}")
+                    full_cols.add(f"{col_frame}{l_var}")
+            else:
+                full_cols.add(col_frame)
+
+            for r in valid_records:
                 blob = rec_blob(r)
                 blob_norm = norm_alnum(blob)
-                if any(a in blob_norm for a in aliases) and (has_token(blob, col3) or any(f"{a}{col3}" in blob_norm for a in aliases)):
-                    return r["img"]
-            if en_colors:
-                for r in records:
-                    blob = rec_blob(r)
-                    blob_norm = norm_alnum(blob)
-                    if any(a in blob_norm for a in aliases) and any(has_token(blob, ec) for ec in en_colors):
+                if any(fb in blob_norm or fb in blob for fb in forbid):
+                    continue
+                if any(a in blob_norm or f"pr{code}" in blob_norm or f"mu{code}" in blob_norm for a in aliases):
+                    if any(fc in blob or fc.replace("-", "") in blob_norm for fc in full_cols):
                         return r["img"]
         return None
 
@@ -712,51 +871,92 @@ def match_record_for_item(item: Dict[str, Any], records: List[Dict[str, Any]]) -
     if b_low == "ray-ban":
         m_rb = re.match(r"^RB\s*0*(\d{3,4})(?:-?S)?\s+(?:COL\.?\s*)?([A-Z0-9]{3,6})(?:[/-]([A-Z0-9]{2}))?", m_up)
         if m_rb:
-            num, col_main = m_rb.group(1), m_rb.group(2).lower()
+            num = m_rb.group(1)
+            col_main = m_rb.group(2).lower()
+            col_lens = (m_rb.group(3) or "").lower()
             aliases = [f"rb{num}", f"rb0{num}"]
-            for r in records:
+            for r in valid_records:
                 blob = rec_blob(r)
                 blob_norm = norm_alnum(blob)
-                if any(a in blob_norm for a in aliases) and (has_token(blob, col_main) or col_main in blob_norm):
-                    return r["img"]
+                if not any(a in blob_norm for a in aliases):
+                    continue
+                if col_lens:
+                    # Если код линзы состоит из 2 цифр (например /58, /32, /71, /31), требуем явный разделитель / или -,
+                    # чтобы размер оправы "902 58" (58мм) после склейки norm_alnum не превращался в "90258"
+                    if col_lens.isdigit():
+                        if f"{col_main}/{col_lens}" in blob or f"{col_main}-{col_lens}" in blob:
+                            return r["img"]
+                    else:
+                        if (
+                            f"{col_main}/{col_lens}" in blob
+                            or f"{col_main}-{col_lens}" in blob
+                            or f"{col_main}{col_lens}" in blob_norm
+                        ):
+                            return r["img"]
+                else:
+                    if has_token(blob, col_main) or col_main in blob_norm:
+                        return r["img"]
         return None
 
-    # 16. Gotti / Ic! Berlin / Lunor / Silhouette / Andy Wolf / BLACKFIN / PRODESIGN / Paul Smith / Haffmans
+    # 16. Gotti: "AMALIA GLB-PL", "DAGLEY GLT", "DABBIS GSB", "LANCE BLKM" -> строго весь код цвета!
     if b_low == "gotti":
         parts = m_up.split()
         if len(parts) >= 2:
             m_name = parts[0].lower()
-            c_tok = parts[1].split("-")[0].lower()
-            for r in records:
+            c_full = parts[1].lower()
+            for r in valid_records:
                 blob = rec_blob(r)
-                if has_token(blob, m_name) and (has_token(blob, c_tok) or any(has_token(blob, ec) for ec in en_colors)):
+                if has_token(blob, m_name) and has_token(blob, c_full):
+                    # Дополнительно проверяем, что после c_full в SKU нет дефиса с другим под-кодом (чтобы GLB не матчил GLB-PL, а BLKM — BLKM-GRA)
+                    if "-" not in c_full and re.search(r"\b" + re.escape(c_full) + r"-[a-z0-9]+", blob):
+                        continue
                     return r["img"]
         return None
 
+    # 17. Ic! Berlin: "Rast Large Gun Metal", "Basti S. Marine Blue RX-Clear", "Aurelie Bronze"
     if b_low == "ic! berlin":
-        m_clean = re.sub(r"\bRX[-\s]*Clear\b", "", model, flags=re.I).strip()
+        m_clean = re.sub(r"\bRX[-\s]*Clear\b", "", model, flags=re.I)
+        m_clean = re.sub(r"\b\d{2}(?:/\d{2})?\b", "", m_clean).strip()
         words = m_clean.split()
         if words:
             m_name = words[0].lower()
-            if len(words) >= 2 and len(words[1].rstrip(".")) == 1:
+            color_start = 1
+            if len(words) >= 2 and (len(words[1].rstrip(".")) == 1 or words[1].lower() in ("large", "small", "medium", "east", "west")):
                 m_name = f"{words[0]} {words[1].rstrip('.')}".lower()
-            for r in records:
-                blob = rec_blob(r)
-                if has_token(blob, m_name) and en_colors and any(has_token(blob, ec) for ec in en_colors):
-                    return r["img"]
+                color_start = 2
+                if len(words) >= 3 and words[2].lower() in ("large", "small", "medium"):
+                    color_start = 3
+            color_tokens = [
+                w.lower().rstrip(".,")
+                for w in words[color_start:]
+                if len(w.rstrip(".,")) >= 3 and w.lower() not in ("large", "small", "medium", "new")
+            ]
+            if not color_tokens:
+                return None
+            base_first = words[0].lower()
+            for r in valid_records:
+                t_low = f"{r['title']} {r['handle']}".lower()
+                v_low = f"{r['var_title']} {r['var_sku']}".lower()
+                if has_token(t_low, base_first):
+                    if all(has_token(v_low, ct) for ct in color_tokens):
+                        # Если цвет в модели ровно один (например "Black"), не берём двухцветные варианты вроде "Teak-Black" или "Black-Gold"
+                        if len(color_tokens) == 1:
+                            ct0 = color_tokens[0]
+                            if re.search(r"[a-z]+[-\s/]+" + re.escape(ct0) + r"|" + re.escape(ct0) + r"[-\s/]+(?:gold|silver|gun|teak|blue|green|red|orange|brown|pearl)", r["var_title"].lower()):
+                                continue
+                        return r["img"]
         return None
 
     if b_low == "haffmans & neumeister":
         parts = m_up.split()
-        if parts:
+        if len(parts) >= 2:
             m_name = parts[0].lower()
-            c_code = parts[1].lower() if len(parts) >= 2 else ""
-            for r in records:
+            c_code = parts[1].lower()
+            for r in valid_records:
                 t_low = r["title"].lower()
                 v_low = f"{r['var_title']} {r['var_sku']}".lower()
-                if has_token(t_low, m_name):
-                    if (c_code and has_token(v_low, c_code)) or (en_colors and any(has_token(v_low, ec) for ec in en_colors)):
-                        return r["img"]
+                if has_token(t_low, m_name) and has_token(v_low, c_code):
+                    return r["img"]
         return None
 
     if b_low == "lunor":
@@ -766,47 +966,70 @@ def match_record_for_item(item: Dict[str, Any], records: List[Dict[str, Any]]) -
             mod_num = m_mod.group(1).lower()
             tail = m_up[m_mod.end():].strip()
             tail_col = re.sub(r"^COL\.?\s*", "", tail).split()[0].lower() if tail else ""
-            for r in records:
-                blob = rec_blob(r)
-                if has_token(blob, mod_num):
-                    if (tail_col and has_token(blob, tail_col)) or (en_colors and any(has_token(blob, ec) for ec in en_colors)):
+            if tail_col:
+                for r in valid_records:
+                    blob = rec_blob(r)
+                    if has_token(blob, mod_num) and has_token(blob, tail_col):
                         return r["img"]
         return None
 
-    if b_low in ("silhouette", "andy wolf", "prodesign", "blackfin", "paul smith", "haffmans & neumeister"):
-        # Извлекаем номер/имя модели и код цвета
+    if b_low == "paul smith":
+        # Например: "Abbott V2 001", "Adelaide V2 002", "Albemarle 004 53/19"
+        clean_ps = re.sub(r"\s+\d{2}/\d{2}$", "", m_up).strip()
+        parts = clean_ps.split()
+        if len(parts) >= 2:
+            m_name = parts[0].lower()
+            ver = parts[1].lower() if parts[1].upper() in ("V1", "V2") else ""
+            c_code = parts[-1].lower().zfill(3) if parts[-1].isdigit() else parts[-1].lower()
+            for r in valid_records:
+                blob = rec_blob(r)
+                if not has_token(blob, m_name):
+                    continue
+                if ver == "v2" and "v1" in blob and "v2" not in blob:
+                    continue
+                if ver == "v1" and "v2" in blob and "v1" not in blob:
+                    continue
+                if has_token(blob, c_code) or has_token(blob, c_code.lstrip("0") or "0"):
+                    return r["img"]
+        return None
+
+    if b_low in ("silhouette", "andy wolf", "prodesign", "blackfin"):
+        # Извлекаем номер/имя модели и точный код цвета (без fallback по словесному цвету!)
         m_col = re.search(r"\b(?:col\.?|c\.)\s*([a-z0-9]+)", m_up, flags=re.I)
         if m_col:
             c_code = m_col.group(1).lower()
-            m_head = m_up[:m_col.start()].strip()
-            mod_toks = [t.lower() for t in re.split(r"[\s._-]+", m_head) if len(t) >= 3 and t.upper() not in ("MOD", "TMA", "MUST")]
-            if mod_toks:
-                for r in records:
+            m_head = re.sub(r"\b\d{2}[/-]\d{2}\b", "", m_up[:m_col.start()]).strip()
+            mod_toks = [
+                t.lower()
+                for t in re.split(r"[\s._]+", m_head)
+                if len(t) >= 3 and t.upper() not in ("MOD", "TMA", "MUST") and not re.match(r"^BF\d+$", t.upper())
+            ]
+            if mod_toks and c_code:
+                for r in valid_records:
                     blob = rec_blob(r)
-                    if any(has_token(blob, mt) for mt in mod_toks):
-                        if has_token(blob, c_code) or (en_colors and any(has_token(blob, ec) for ec in en_colors)):
-                            return r["img"]
+                    if all(has_token(blob, mt) for mt in mod_toks) and has_token(blob, c_code):
+                        return r["img"]
         else:
             clean_m = re.sub(r"\s+\d{2}/\d{2}$", "", m_up).strip()
             parts = [p for p in re.split(r"[\s._-]+", clean_m) if p]
             if len(parts) >= 2:
                 c_code = parts[-1].lower()
                 main_mod = parts[0].lower()
-                for r in records:
+                for r in valid_records:
                     blob = rec_blob(r)
-                    if has_token(blob, main_mod):
-                        if has_token(blob, c_code) or (en_colors and any(has_token(blob, ec) for ec in en_colors)):
-                            return r["img"]
+                    if has_token(blob, main_mod) and has_token(blob, c_code):
+                        return r["img"]
         return None
 
     if b_low == "oakley":
-        m_ok = re.search(r"(OO\d{4}|OX\d{4})\s*-\s*(\d{2})\d{0,2}", m_up)
+        m_ok = re.search(r"(OO\d{4}|OX\d{4})\s*-\s*(\d{4})", m_up)
         if m_ok:
             mod_code = m_ok.group(1).lower()
-            col2 = m_ok.group(2).lower()
-            for r in records:
+            col4 = m_ok.group(2).lower()
+            for r in valid_records:
                 blob = rec_blob(r)
-                if has_token(blob, mod_code) and (has_token(blob, col2) or f"{mod_code}{col2}" in norm_alnum(blob)):
+                blob_norm = norm_alnum(blob)
+                if has_token(blob, mod_code) and (has_token(blob, col4) or f"{mod_code}{col4}" in blob_norm):
                     return r["img"]
         return None
 
@@ -814,7 +1037,7 @@ def match_record_for_item(item: Dict[str, Any], records: List[Dict[str, Any]]) -
         m_pl = re.search(r"PLD\s*([A-Z]?\d{4})[^\s]*\s+([A-Z0-9]{3})", m_up)
         if m_pl:
             mod_code, col3 = m_pl.group(1).lower(), m_pl.group(2).lower()
-            for r in records:
+            for r in valid_records:
                 blob = rec_blob(r)
                 if has_token(blob, mod_code) and has_token(blob, col3):
                     return r["img"]
@@ -962,7 +1185,7 @@ def extract_variants_from_shopify_product_html(html: str, brand: str, store_url:
         except Exception:
             pass
 
-    # 2. Встроенный массив вариантов Web Pixels (EuroOptica и др.)
+    # 2. Встроенный массив вариантов Web Pixels (только если SKU/картинка подтверждают принадлежность к expected_handle, без блока рекомендаций!)
     pat = r'\{"id":"?\d+"?,"image":\{"src":"([^"]+)"\},"price":\{[^}]+\},"sku":"([^"]*)"\s*,"title":"([^"]*)"'
     for raw_img, raw_sku, raw_vtitle in re.findall(pat, html):
         img = raw_img.replace("\\/", "/").strip()
@@ -971,20 +1194,20 @@ def extract_variants_from_shopify_product_html(html: str, brand: str, store_url:
         sku = raw_sku.replace("\\/", "/").strip()
         vtitle = raw_vtitle.replace("\\/", "/").strip()
         if img:
-            records.append(
-                {
-                    "brand": brand,
-                    "source": store_url,
-                    "title": page_title,
-                    "handle": expected_handle,
-                    "vendor": brand,
-                    "tags": "",
-                    "var_sku": sku,
-                    "var_title": vtitle,
-                    "img": img,
-                    "multi_variant": True,
-                }
-            )
+            rec = {
+                "brand": brand,
+                "source": store_url,
+                "title": page_title,
+                "handle": expected_handle,
+                "vendor": brand,
+                "tags": "",
+                "var_sku": sku,
+                "var_title": vtitle,
+                "img": img,
+                "multi_variant": True,
+            }
+            if is_valid_brand_record(brand, rec):
+                records.append(rec)
     return records
 
 
@@ -1144,18 +1367,18 @@ def search_html_stores_for_query(brand: str, short_q: str, full_q: str) -> List[
         except Exception:
             pass
 
-    return recs
+    return [r for r in recs if is_valid_brand_record(brand, r)]
 
 
 def search_mykita_official(item: Dict[str, Any]) -> Optional[str]:
-    """Ищет конкретный цвет модели MYKITA напрямую на mykita.com/en/search?q=<model>."""
+    """Ищет конкретный цвет модели MYKITA напрямую на mykita.com/en/search?q=<model> строго по коду col.XXX."""
     model = item["model"].strip()
     m_clean = re.sub(r",?\s*(?:col\.?|c\.)\s*([a-z0-9]+).*$", "", model, flags=re.I).strip()
     m_col = re.search(r"(?:col\.?|c\.)\s*([a-z0-9]+)", model, flags=re.I)
-    if not m_clean:
+    if not m_clean or not m_col:
         return None
-    col_code = m_col.group(1).upper() if m_col else ""
-    en_colors = english_color_keywords(item.get("color", ""))
+    col_code = m_col.group(1).upper()
+    col_padded = col_code.zfill(3) if col_code.isdigit() else col_code
     q = urllib.parse.quote(m_clean)
     url = f"https://mykita.com/en/search?q={q}"
     try:
@@ -1177,18 +1400,21 @@ def search_mykita_official(item: Dict[str, Any]) -> Optional[str]:
             except Exception:
                 return None
 
-    # Проверяем блок <ul class="detail-list-colours"> на странице модели
+    # Проверяем блок <ul class="detail-list-colours"> на странице модели (строго модель + код цвета!)
     colours = re.findall(
         r'<img\s+src="(//mykitamedia\.com/media/image/[^"]+\.jpg)"\s+alt="Frame:\s*([^"]+)"',
         html,
     )
     for img_src, alt_text in colours:
-        if col_code and (has_token(alt_text, col_code) or has_token(alt_text, f"C{col_code}")):
+        if not has_token(alt_text.lower(), m_clean.lower()):
+            continue
+        if (
+            has_token(alt_text, col_code)
+            or has_token(alt_text, col_padded)
+            or has_token(alt_text, f"C{col_code}")
+            or has_token(alt_text, f"C{col_padded}")
+        ):
             return "https:" + re.sub(r"/ri-s\d+/(?:tiny|small|bigger)/1x/", "/ri-s4/extra/1x/", img_src)
-    if en_colors:
-        for img_src, alt_text in colours:
-            if any(has_token(alt_text.lower(), ec) for ec in en_colors):
-                return "https:" + re.sub(r"/ri-s\d+/(?:tiny|small|bigger)/1x/", "/ri-s4/extra/1x/", img_src)
     return None
 
 

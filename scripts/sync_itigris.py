@@ -568,6 +568,11 @@ def merge_inventory(
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     by_norm_photo, by_stem_photo = index_local_photos()
     grouped: Dict[Tuple[str, str, str, str, str], Dict[str, Any]] = {}
+    sun_keys = {
+        (r["brand"].lower(), norm_sku_key(r["brand"], r["model_raw"]))
+        for r in raw_rows
+        if r["type"] == "Солнцезащитные очки"
+    }
 
     for row in raw_rows:
         brand = row["brand"]
@@ -582,10 +587,13 @@ def merge_inventory(
 
         if group_key not in grouped:
             sku = make_safe_sku(brand, row["model_raw"])
+            has_sun_twin = row["type"] == "Оправы" and (brand.lower(), key_norm) in sun_keys
+            if has_sun_twin and not sku.upper().endswith("_OPT"):
+                sku = f"{sku}_OPT"
             display_model = clean_display_model(row["model_raw"])
             photo = (
                 by_stem_photo.get(sku.lower())
-                or by_norm_photo.get(key_norm)
+                or ("" if has_sun_twin else by_norm_photo.get(key_norm))
                 or ""
             )
             shapes = [
