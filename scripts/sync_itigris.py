@@ -567,44 +567,42 @@ def merge_inventory(
     excluded_brands: set[str],
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     by_norm_photo, by_stem_photo = index_local_photos()
-    grouped: Dict[Tuple[str, str, str], Dict[str, Any]] = {}
+    grouped: Dict[Tuple[str, str, str, str, str], Dict[str, Any]] = {}
 
     for row in raw_rows:
         brand = row["brand"]
         if brand.lower() in excluded_brands:
             continue
 
-        base_model = extract_base_model(brand, row["model_raw"])
-        group_key = (row["type"], brand.lower(), base_model.upper())
-
-        var_norm = norm_sku_key(brand, row["model_raw"])
-        var_sku = make_safe_sku(brand, row["model_raw"])
-        var_display = clean_display_model(row["model_raw"])
-        var_photo = (
-            by_stem_photo.get(var_sku.lower())
-            or by_norm_photo.get(var_norm)
-            or ""
-        )
-        _, _, extra = row["model_raw"].partition("+")
-        var_note = f"В комплекте: {extra.strip()}" if extra.strip() else ""
-        var_size = format_frame_size(row["size"])
+        key_norm = norm_sku_key(brand, row["model_raw"])
+        color_norm = row["color"].strip().lower()
+        lens_norm = row["lens_type"].strip().lower()
+        # Объединяем в одну карточку ТОЛЬКО 100% идентичные очки (одинаковый полный артикул с кодом цвета, цвет оправы и линз)
+        group_key = (row["type"], brand.lower(), key_norm, color_norm, lens_norm)
 
         if group_key not in grouped:
+            sku = make_safe_sku(brand, row["model_raw"])
+            display_model = clean_display_model(row["model_raw"])
+            photo = (
+                by_stem_photo.get(sku.lower())
+                or by_norm_photo.get(key_norm)
+                or ""
+            )
             shapes = [
                 s.strip()
                 for s in row["design"].split(",")
                 if s.strip()
             ]
+            _, _, extra = row["model_raw"].partition("+")
             grouped[group_key] = {
-                "sku": var_sku,
+                "sku": sku,
                 "brand": brand,
-                "baseModel": base_model,
-                "model": var_display,
+                "model": display_model,
                 "modelRaw": row["model_raw"],
-                "title": f"{brand} {var_display}".strip(),
+                "title": f"{brand} {display_model}".strip(),
                 "type": row["type"],
                 "price": row["price"],
-                "photo": var_photo,
+                "photo": photo,
                 "boutiques": [],
                 "stock": {"moyka": 0, "petrovsky": 0, "total": 0},
                 "shapes": shapes,
@@ -613,9 +611,8 @@ def merge_inventory(
                 "color": row["color"],
                 "lens": row["lens_type"],
                 "rim": row["rim_type"],
-                "size": var_size,
-                "note": var_note,
-                "_variants": {},
+                "size": format_frame_size(row["size"]),
+                "note": f"В комплекте: {extra.strip()}" if extra.strip() else "",
             }
 
         item = grouped[group_key]
@@ -626,59 +623,12 @@ def merge_inventory(
         item["stock"]["total"] += row["qty"]
         if row["price"] > item["price"]:
             item["price"] = row["price"]
-        if not item["photo"] and var_photo:
-            item["photo"] = var_photo
 
-        vmap = item["_variants"]
-        if var_norm not in vmap:
-            vmap[var_norm] = {
-                "sku": var_sku,
-                "model": var_display,
-                "modelRaw": row["model_raw"],
-                "price": row["price"],
-                "photo": var_photo,
-                "boutiques": [b_id],
-                "color": row["color"],
-                "lens": row["lens_type"],
-                "size": var_size,
-                "note": var_note,
-            }
-        else:
-            v = vmap[var_norm]
-            if b_id not in v["boutiques"]:
-                v["boutiques"].append(b_id)
-            if row["price"] > v["price"]:
-                v["price"] = row["price"]
-            if not v["photo"] and var_photo:
-                v["photo"] = var_photo
-
-    products: List[Dict[str, Any]] = []
-    for item in grouped.values():
-        # Всегда фиксируем единый порядок бутиков: сначала Мойка, 58, затем Петровский, 22
+    products = list(grouped.values())
+    for item in products:
         item["boutiques"] = [
             b for b in ("moyka", "petrovsky") if b in item["boutiques"]
         ]
-        variants = list(item.pop("_variants").values())
-        for v in variants:
-            v["boutiques"] = [
-                b for b in ("moyka", "petrovsky") if b in v["boutiques"]
-            ]
-            if not v["photo"] and item["photo"]:
-                v["photo"] = item["photo"]
-
-        if len(variants) > 1:
-            item["model"] = item["baseModel"]
-            item["title"] = f"{item['brand']} {item['baseModel']}".strip()
-            all_raw = " / ".join(dict.fromkeys(v["model"] for v in variants))
-            item["modelRaw"] = all_raw
-            all_colors = " / ".join(dict.fromkeys(v["color"] for v in variants if v["color"]))
-            if all_colors:
-                item["color"] = all_colors
-
-        item.pop("baseModel", None)
-        if len(variants) > 1:
-            item["variants"] = variants
-        products.append(item)
 
     # Сортировка: сначала модели с фото, затем по ценности/бренду и цене по убыванию
     products.sort(

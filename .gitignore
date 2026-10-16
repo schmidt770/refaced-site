@@ -10,3 +10,5 @@ __pycache__/
 *.pyc
 *.db
 scripts/missing_photos.json
+scripts/.shopify_catalog_cache.json
+

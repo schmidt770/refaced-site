@@ -227,7 +227,7 @@ async function initCatalog() {
   const byFamily = new Map();
 
   try {
-    const response = await fetch("assets/data/catalog.json?v=8");
+    const response = await fetch("assets/data/catalog.json?v=10");
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     products = (await response.json()).products || [];
   } catch (error) {
@@ -236,14 +236,12 @@ async function initCatalog() {
     return;
   }
 
-  // Индексируем каталог по SKU (включая SKU отдельных цветовых вариаций)
+  // Индексируем каталог по SKU и группируем одноимённые модели по базовому коду (только для блока «Другие цвета этой модели» внутри модалки)
   products.forEach((p) => {
+    const fam = getBaseModelFamily(p);
+    if (!byFamily.has(fam)) byFamily.set(fam, []);
+    byFamily.get(fam).push(p);
     bySku.set(p.sku, p);
-    (p.variants || []).forEach((v) => {
-      if (v.sku && !bySku.has(v.sku)) {
-        bySku.set(v.sku, p);
-      }
-    });
   });
 
   // Заполняем селект брендов, форм и границы цены
@@ -584,47 +582,33 @@ async function initCatalog() {
     document.body.classList.remove("modal-open");
   }
 
-  function openProductModal(sku, variantIdx = 0) {
+  function openProductModal(sku) {
     const product = bySku.get(sku);
     if (!product || !modal || !modalBody) return;
 
-    const variants = Array.isArray(product.variants) && product.variants.length > 1 ? product.variants : null;
-    const activeVar = variants ? variants[Math.max(0, Math.min(variantIdx, variants.length - 1))] : null;
-
     const hasMoyka = (product.boutiques || []).includes("moyka");
     const hasPetrovsky = (product.boutiques || []).includes("petrovsky");
-    const preferredBoutique =
-      activeVar && (activeVar.boutiques || []).length === 1
-        ? activeVar.boutiques[0]
-        : hasMoyka
-          ? "moyka"
-          : hasPetrovsky
-            ? "petrovsky"
-            : "moyka";
+    const preferredBoutique = hasMoyka ? "moyka" : hasPetrovsky ? "petrovsky" : "moyka";
 
-    const displayPhoto = (activeVar && activeVar.photo) || product.photo;
-    const displayPrice = (activeVar && activeVar.price) || product.price;
-    const displayModelRaw = (activeVar && (activeVar.modelRaw || activeVar.model)) || product.modelRaw || product.model;
-    const displayColor = (activeVar && activeVar.color) || product.color;
-    const displayLens = (activeVar && activeVar.lens) || product.lens;
-    const displaySize = (activeVar && activeVar.size) || product.size;
-    const displayNote = (activeVar && activeVar.note) || product.note;
+    const fam = getBaseModelFamily(product);
+    const siblings = (byFamily.get(fam) || []).filter((s) => s.model !== product.model || s.sku === product.sku);
+    const showVariants = siblings.length > 1;
 
     const specs = [
-      ["Артикул / модель", displayModelRaw],
+      ["Артикул / модель", product.modelRaw || product.model],
       ["Категория", product.type],
       ["Конструкция", product.rim],
       ["Форма", (product.shapes || []).map(formatShape).join(", ")],
       ["Материал", product.material],
-      ["Цвет", displayColor],
-      ["Линзы", displayLens],
-      ["Размер", displaySize],
+      ["Цвет", product.color],
+      ["Линзы", product.lens],
+      ["Размер", product.size],
       ["Кому", product.audience],
-      ["Особенности", displayNote]
+      ["Особенности", product.note]
     ].filter(([, val]) => val && String(val).trim() !== "");
 
-    const mediaHtml = displayPhoto
-      ? `<img src="${escapeHtml(displayPhoto)}" alt="${escapeHtml(product.title)}" />`
+    const mediaHtml = product.photo
+      ? `<img src="${escapeHtml(product.photo)}" alt="${escapeHtml(product.title)}" />`
       : fallbackSvgHtml(product);
 
     modalBody.innerHTML = `
@@ -636,7 +620,7 @@ async function initCatalog() {
         <div class="pm__body">
           <p class="pm__brand">${escapeHtml(product.brand)}</p>
           <h2 class="pm__title" id="pm-title">${escapeHtml(product.title)}</h2>
-          ${displayPrice ? `<p class="pm__price">${priceFormat.format(displayPrice)} ₽</p>` : ""}
+          ${product.price ? `<p class="pm__price">${priceFormat.format(product.price)} ₽</p>` : ""}
 
           <p class="pm__section-label">Наличие в бутиках Санкт-Петербурга</p>
           <div class="pm__boutiques">
@@ -659,15 +643,14 @@ async function initCatalog() {
           </div>
 
           ${
-            variants
-              ? `<p class="pm__section-label">Исполнения в наличии (${variants.length})</p>
+            showVariants
+              ? `<p class="pm__section-label">Другие цвета этой модели (${siblings.length})</p>
                  <div class="pm__variants">
-                   ${variants
-                     .map((v, idx) => {
-                       const bNames = (v.boutiques || []).map((b) => BOUTIQUE_NAMES[b] || b).join(" · ");
-                       const label = bNames ? `${v.model} (${bNames})` : v.model;
-                       return `<button type="button" class="pm__variant ${idx === variantIdx ? "is-active" : ""}" data-pm-var-idx="${idx}">${escapeHtml(label)}</button>`;
-                     })
+                   ${siblings
+                     .map(
+                       (sib) =>
+                         `<button type="button" class="pm__variant ${sib.sku === product.sku ? "is-active" : ""}" data-pm-sku="${escapeHtml(sib.sku)}">${escapeHtml(sib.model)}</button>`
+                     )
                      .join("")}
                  </div>`
               : ""
@@ -704,11 +687,8 @@ async function initCatalog() {
     modal.setAttribute("aria-hidden", "false");
     document.body.classList.add("modal-open");
 
-    modalBody.querySelectorAll("[data-pm-var-idx]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const idx = parseInt(btn.dataset.pmVarIdx, 10) || 0;
-        openProductModal(product.sku, idx);
-      });
+    modalBody.querySelectorAll("[data-pm-sku]").forEach((btn) => {
+      btn.addEventListener("click", () => openProductModal(btn.dataset.pmSku));
     });
 
     const bookBtn = modalBody.querySelector("[data-pm-book]");
