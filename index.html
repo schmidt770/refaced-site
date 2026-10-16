@@ -17,7 +17,7 @@
   <link rel="preload" href="assets/fonts/cormorant-garamond-cyrillic-300-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/fonts/manrope-cyrillic-400-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/img/hero-model.jpg" as="image" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=4" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=7" />
   <script>document.documentElement.classList.add("js");</script>
 
   <script type="application/ld+json">
@@ -195,13 +195,13 @@
       </div>
     </section>
 
-    <!-- КАТАЛОГ: пока подборка из assets/data/catalog.json, потом — ITigris -->
+    <!-- КАТАЛОГ: актуальный ассортимент из ITigris Optima -->
     <section class="section section--ivory" id="collection">
       <div class="wrap">
         <div class="section-head section-head--split" data-reveal>
           <div>
             <p class="eyebrow">Каталог</p>
-            <h2 class="section-head__title">Избранные модели</h2>
+            <h2 class="section-head__title">Коллекция оправ и&nbsp;очков</h2>
           </div>
           <div class="tabs" id="catalog-filters" role="tablist" aria-label="Тип">
             <button class="is-active" type="button" data-type="">Все</button>
@@ -209,7 +209,127 @@
             <button type="button" data-type="Солнцезащитные очки">Солнцезащитные</button>
           </div>
         </div>
+
+        <div class="catalog-panel" data-reveal>
+          <div class="catalog-search-row">
+            <div class="catalog-top-bar">
+              <div class="catalog-search">
+                <svg class="catalog-search__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7.5"></circle>
+                  <path d="M16.5 16.5L21 21"></path>
+                </svg>
+                <input
+                  type="search"
+                  id="catalog-search"
+                  placeholder="Поиск по бренду, модели, артикулу или цвету…"
+                  autocomplete="off"
+                  aria-label="Поиск по каталогу"
+                />
+                <button type="button" class="catalog-search__clear" id="catalog-search-clear" hidden aria-label="Очистить поиск">×</button>
+              </div>
+
+              <div class="catalog-price" role="group" aria-label="Фильтр по стоимости">
+                <span class="catalog-price__label">Стоимость, ₽</span>
+                <div class="catalog-price__fields">
+                  <label class="catalog-price__input-wrap">
+                    <span>от</span>
+                    <input
+                      type="text"
+                      inputmode="numeric"
+                      id="filter-price-min"
+                      placeholder="2 400"
+                      autocomplete="off"
+                      aria-label="Стоимость от, в рублях"
+                    />
+                  </label>
+                  <span class="catalog-price__dash" aria-hidden="true">—</span>
+                  <label class="catalog-price__input-wrap">
+                    <span>до</span>
+                    <input
+                      type="text"
+                      inputmode="numeric"
+                      id="filter-price-max"
+                      placeholder="271 600"
+                      autocomplete="off"
+                      aria-label="Стоимость до, в рублях"
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="catalog-selects">
+              <label class="catalog-select">
+                <span>Бутик</span>
+                <select id="filter-boutique" aria-label="Фильтр по бутику">
+                  <option value="">Все бутики</option>
+                  <option value="moyka">Мойка, 58</option>
+                  <option value="petrovsky">Петровский, 22</option>
+                </select>
+              </label>
+
+              <label class="catalog-select">
+                <span>Бренд</span>
+                <select id="filter-brand" aria-label="Фильтр по бренду">
+                  <option value="">Все бренды</option>
+                </select>
+              </label>
+
+              <label class="catalog-select">
+                <span>Форма</span>
+                <select id="filter-shape" aria-label="Фильтр по форме">
+                  <option value="">Любая форма</option>
+                </select>
+              </label>
+
+              <label class="catalog-select">
+                <span>Кому</span>
+                <select id="filter-audience" aria-label="Фильтр по назначению">
+                  <option value="">Все</option>
+                  <option value="унисекс">Унисекс</option>
+                  <option value="женская">Женские</option>
+                  <option value="мужская">Мужские</option>
+                  <option value="детская">Детские</option>
+                </select>
+              </label>
+
+              <label class="catalog-select">
+                <span>Конструкция</span>
+                <select id="filter-rim" aria-label="Фильтр по конструкции оправы">
+                  <option value="">Любая</option>
+                  <option value="ободковая">Ободковые</option>
+                  <option value="безободковая">Безободковые / винтовые</option>
+                  <option value="полуободковая">Полуободковые</option>
+                </select>
+              </label>
+
+              <label class="catalog-select">
+                <span>Сортировка</span>
+                <select id="filter-sort" aria-label="Сортировка каталога">
+                  <option value="featured">Избранные модели</option>
+                  <option value="price-desc">Цена: по убыванию</option>
+                  <option value="price-asc">Цена: по возрастанию</option>
+                  <option value="brand-asc">По бренду: А–Я</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div class="catalog-chips-row">
+            <div class="catalog-chips" id="catalog-brand-chips" aria-label="Популярные бренды"></div>
+            <div class="catalog-status">
+              <span id="catalog-count">Загрузка коллекции…</span>
+              <button type="button" class="catalog-reset" id="catalog-reset" hidden>Сбросить фильтры</button>
+            </div>
+          </div>
+        </div>
+
         <div class="products" id="catalog-grid" aria-live="polite"></div>
+
+        <div class="catalog-more" id="catalog-more-wrap" hidden>
+          <button type="button" class="btn btn--ink-outline" id="catalog-more-btn">Показать ещё модели</button>
+        </div>
+
         <p class="collection__note" data-reveal>Полный ассортимент и&nbsp;наличие — в&nbsp;бутиках и&nbsp;по&nbsp;телефону <a href="tel:+78005004043" data-goal="phone_click">8 (800) 500-40-43</a></p>
       </div>
     </section>
@@ -368,6 +488,17 @@
     </div>
   </footer>
 
-  <script type="module" src="assets/js/main.js?v=4"></script>
+  <!-- КАРТОЧКА ТОВАРА -->
+  <div class="product-modal" id="product-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="pm-title">
+    <div class="product-modal__backdrop" data-pm-close></div>
+    <div class="product-modal__dialog" role="document">
+      <button type="button" class="product-modal__close" data-pm-close aria-label="Закрыть карточку товара">
+        <span aria-hidden="true">×</span>
+      </button>
+      <div class="product-modal__content" id="product-modal-body"></div>
+    </div>
+  </div>
+
+  <script type="module" src="assets/js/main.js?v=7"></script>
 </body>
 </html>
