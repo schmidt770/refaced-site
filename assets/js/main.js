@@ -728,6 +728,57 @@ async function initCatalog() {
   resetAllFilters();
 }
 
+function initTrustCarousel() {
+  const track = document.querySelector("[data-trust-track]");
+  if (!track) return;
+  const prevBtn = document.querySelector("[data-trust-prev]");
+  const nextBtn = document.querySelector("[data-trust-next]");
+
+  const getStep = () => {
+    const firstCard = track.querySelector(".trust-card");
+    if (!firstCard) return 320;
+    const gap = parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap || "24") || 24;
+    return firstCard.getBoundingClientRect().width + gap;
+  };
+
+  if (prevBtn) {
+    prevBtn.addEventListener("click", () => {
+      track.scrollBy({ left: -getStep(), behavior: "smooth" });
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener("click", () => {
+      track.scrollBy({ left: getStep(), behavior: "smooth" });
+    });
+  }
+
+  let isDown = false;
+  let startX = 0;
+  let startScroll = 0;
+
+  track.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
+    isDown = true;
+    startX = e.pageX;
+    startScroll = track.scrollLeft;
+    track.classList.add("is-dragging");
+  });
+
+  window.addEventListener("mouseup", () => {
+    if (!isDown) return;
+    isDown = false;
+    track.classList.remove("is-dragging");
+  });
+
+  track.addEventListener("mousemove", (e) => {
+    if (!isDown) return;
+    e.preventDefault();
+    const walk = e.pageX - startX;
+    track.scrollLeft = startScroll - walk;
+  });
+}
+
 function initBookingLinks() {
   document.querySelectorAll("[data-book]").forEach((link) => {
     link.addEventListener("click", () => selectBoutique(link.dataset.book));
@@ -739,6 +790,7 @@ bindGoals();
 initHeader();
 initMenu();
 initSliders();
+initTrustCarousel();
 initCatalog();
 initBookingLinks();
 mountBooking(document.getElementById("booking-root"));
