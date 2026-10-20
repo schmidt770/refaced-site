@@ -717,8 +717,8 @@ body.menu-open .menu__nav a:nth-child(7) { transition-delay: 0.3s; }
   margin: 0;
 }
 
-.about__media img,
-.lenses__media img {
+.about__media > img,
+.lenses__media > img {
   width: 100%;
   height: auto;
   aspect-ratio: 4 / 5;
@@ -1001,6 +1001,10 @@ body.menu-open .menu__nav a:nth-child(7) { transition-delay: 0.3s; }
   aspect-ratio: 4 / 5;
 }
 
+.slider--tall .slider__track img {
+  object-position: 50% 35%;
+}
+
 .slider__track img {
   position: absolute;
   inset: 0;
@@ -1055,6 +1059,29 @@ body.menu-open .menu__nav a:nth-child(7) { transition-delay: 0.3s; }
   border-color: var(--ivory);
   background: var(--ivory);
   color: var(--ink);
+}
+
+.section--ivory .slider__track {
+  background: var(--paper);
+}
+
+.section--ivory .slider__count {
+  color: var(--muted-light);
+}
+
+.section--ivory .slider__count b {
+  color: var(--ink);
+}
+
+.section--ivory .slider__arrows button {
+  border-color: var(--line-light);
+  color: var(--ink);
+}
+
+.section--ivory .slider__arrows button:hover {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--ivory);
 }
 
 /* ---------- коллекция ---------- */
@@ -1677,14 +1704,27 @@ body.menu-open .menu__nav a:nth-child(7) { transition-delay: 0.3s; }
 
 .news-card h3 {
   margin: 0;
-  font: 400 clamp(26px, 2.4vw, 32px)/1.12 var(--serif);
+  font: 400 clamp(28px, 2.8vw, 38px)/1.12 var(--serif);
 }
 
-.news-card h3 + p {
-  max-width: 380px;
-  margin: 12px 0 0;
+.news-card__body {
+  display: grid;
+  gap: 12px;
+  max-width: 540px;
+  margin-top: 16px;
+}
+
+.news-card__body p {
+  margin: 0;
   color: var(--muted-light);
   font-size: 14px;
+  line-height: 1.68;
+}
+
+.news-card__note {
+  margin-top: 4px !important;
+  color: var(--ink) !important;
+  font-weight: 500;
 }
 
 /* ---------- запись ---------- */
@@ -2155,8 +2195,8 @@ body.menu-open .menu__nav a:nth-child(7) { transition-delay: 0.3s; }
   }
 
   .news {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px;
   }
 
   .fields {
@@ -2255,11 +2295,11 @@ body.menu-open .menu__nav a:nth-child(7) { transition-delay: 0.3s; }
   }
 
   .news {
-    gap: 40px;
+    gap: 56px;
   }
 
   .news-card:nth-child(2) {
-    margin-top: 96px;
+    margin-top: 64px;
   }
 
   .boutique {
