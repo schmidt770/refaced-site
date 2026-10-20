@@ -779,6 +779,46 @@ function initTrustCarousel() {
   });
 }
 
+function initHeroSwitcher() {
+  const hero = document.querySelector(".hero[data-hero-mode]");
+  const switcher = document.querySelector("[data-hero-switcher]");
+  if (!hero || !switcher) return;
+
+  const items = hero.querySelectorAll("[data-hero-item]");
+  const buttons = switcher.querySelectorAll("[data-hero-set]");
+  const videoEl = hero.querySelector('video[data-hero-item="video"]');
+
+  const setMode = (mode) => {
+    hero.dataset.heroMode = mode;
+    items.forEach((el) => {
+      el.classList.toggle("is-active", el.dataset.heroItem === mode);
+    });
+    buttons.forEach((btn) => {
+      const active = btn.dataset.heroSet === mode;
+      btn.classList.toggle("is-active", active);
+      btn.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+    if (videoEl) {
+      if (mode === "video") {
+        videoEl.play().catch(() => {});
+      } else {
+        videoEl.pause();
+      }
+    }
+  };
+
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", () => setMode(btn.dataset.heroSet));
+  });
+
+  const urlMode = new URLSearchParams(window.location.search).get("hero");
+  if (urlMode === "photo" || urlMode === "video") {
+    setMode(urlMode);
+  } else {
+    setMode(hero.dataset.heroMode || "video");
+  }
+}
+
 function initBookingLinks() {
   document.querySelectorAll("[data-book]").forEach((link) => {
     link.addEventListener("click", () => selectBoutique(link.dataset.book));
@@ -789,6 +829,7 @@ initMetrika();
 bindGoals();
 initHeader();
 initMenu();
+initHeroSwitcher();
 initSliders();
 initTrustCarousel();
 initCatalog();

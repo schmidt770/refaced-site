@@ -16,8 +16,8 @@
   <link rel="icon" href="assets/img/logo.png" />
   <link rel="preload" href="assets/fonts/cormorant-garamond-cyrillic-300-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/fonts/manrope-cyrillic-400-normal.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="preload" href="assets/img/hero-model.jpg" as="image" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=14" />
+  <link rel="preload" href="assets/img/hero-video-poster.jpg" as="image" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=15" />
   <script>document.documentElement.classList.add("js");</script>
 
   <script type="application/ld+json">
@@ -90,9 +90,35 @@
 
   <main id="top">
     <!-- ОБЛОЖКА -->
-    <section class="hero">
+    <section class="hero" data-hero-mode="video">
       <div class="hero__media">
-        <img src="assets/img/hero-model.jpg" alt="Модель в оптической оправе REFACED" width="819" height="1024" fetchpriority="high" />
+        <video
+          class="hero__media-item is-active"
+          data-hero-item="video"
+          src="assets/img/hero-video.mp4"
+          poster="assets/img/hero-video-poster.jpg"
+          width="864"
+          height="1080"
+          autoplay
+          muted
+          loop
+          playsinline
+          preload="auto"
+        ></video>
+        <img
+          class="hero__media-item"
+          data-hero-item="photo"
+          src="assets/img/hero-model.jpg"
+          alt="Модель в оптической оправе REFACED"
+          width="819"
+          height="1024"
+          fetchpriority="high"
+        />
+      </div>
+      <div class="hero__switcher" role="group" aria-label="Переключение версии первого экрана" data-hero-switcher>
+        <span class="hero__switcher-label">Обложка</span>
+        <button type="button" class="is-active" data-hero-set="video">Видео (новая)</button>
+        <button type="button" data-hero-set="photo">Фото (прежняя)</button>
       </div>
       <div class="wrap hero__inner">
         <div class="hero__main">
@@ -665,6 +691,6 @@
     </div>
   </div>
 
-  <script type="module" src="assets/js/main.js?v=14"></script>
+  <script type="module" src="assets/js/main.js?v=15"></script>
 </body>
 </html>
