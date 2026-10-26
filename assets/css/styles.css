@@ -694,7 +694,6 @@ body.menu-open .menu__nav a:nth-child(7) { transition-delay: 0.3s; }
   height: auto;
   aspect-ratio: 4 / 5;
   object-fit: cover;
-  border-radius: var(--radius-lg);
 }
 
 .about__blocks {
@@ -958,7 +957,7 @@ body.menu-open .menu__nav a:nth-child(7) { transition-delay: 0.3s; }
   margin-top: 38px;
 }
 
-/* ---------- слайдер и обтекаемые медиа-блоки ---------- */
+/* ---------- слайдер ---------- */
 
 .slider {
   position: relative;
@@ -967,28 +966,8 @@ body.menu-open .menu__nav a:nth-child(7) { transition-delay: 0.3s; }
 .slider__track {
   position: relative;
   overflow: hidden;
-  border-radius: 32px;
-  background: var(--ink);
+  background: var(--ink-2);
   touch-action: pan-y;
-  -webkit-mask-image:
-    linear-gradient(90deg, transparent 0%, #000 11%, #000 89%, transparent 100%),
-    linear-gradient(180deg, transparent 0%, #000 11%, #000 89%, transparent 100%);
-  -webkit-mask-composite: source-in;
-  mask-image:
-    linear-gradient(90deg, transparent 0%, #000 11%, #000 89%, transparent 100%),
-    linear-gradient(180deg, transparent 0%, #000 11%, #000 89%, transparent 100%);
-  mask-composite: intersect;
-}
-
-.slider__track::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  background:
-    radial-gradient(85% 85% at 50% 50%, rgba(40, 40, 43, 0) 58%, rgba(24, 24, 26, 0.55) 100%);
-  mix-blend-mode: multiply;
-  pointer-events: none;
 }
 
 .slider--wide .slider__track {
@@ -1654,29 +1633,10 @@ body.menu-open .menu__nav a:nth-child(7) { transition-delay: 0.3s; }
 }
 
 .trust-card__media {
-  position: relative;
   aspect-ratio: 4 / 5;
   overflow: hidden;
-  border-radius: 24px;
-  background: var(--ink);
-  -webkit-mask-image:
-    linear-gradient(90deg, transparent 0%, #000 9%, #000 91%, transparent 100%),
-    linear-gradient(180deg, transparent 0%, #000 9%, #000 91%, transparent 100%);
-  -webkit-mask-composite: source-in;
-  mask-image:
-    linear-gradient(90deg, transparent 0%, #000 9%, #000 91%, transparent 100%),
-    linear-gradient(180deg, transparent 0%, #000 9%, #000 91%, transparent 100%);
-  mask-composite: intersect;
-}
-
-.trust-card__media::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(85% 85% at 50% 50%, rgba(40, 40, 43, 0) 58%, rgba(24, 24, 26, 0.5) 100%);
-  mix-blend-mode: multiply;
-  pointer-events: none;
+  background: var(--ink-2);
+  border: 1px solid var(--line-dark);
 }
 
 .trust-card__media img {
@@ -1727,10 +1687,8 @@ body.menu-open .menu__nav a:nth-child(7) { transition-delay: 0.3s; }
 }
 
 .news-card__media {
-  position: relative;
   aspect-ratio: 4 / 5;
   overflow: hidden;
-  border-radius: var(--radius-lg);
   background: var(--ink-2);
 }
 
@@ -2300,35 +2258,28 @@ body.menu-open .menu__nav a:nth-child(7) { transition-delay: 0.3s; }
   .hero__media {
     left: auto;
     height: 100%;
-    width: min(60vw, 100svh * 0.85);
+    width: min(58vw, 100svh * 0.8);
   }
 
   .hero__media-item {
     object-position: 50% 20%;
     -webkit-mask-image:
-      linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.25) 18%, rgba(0, 0, 0, 0.75) 38%, #000 56%, #000 82%, transparent 100%),
-      linear-gradient(to top, transparent 0%, rgba(0, 0, 0, 0.65) 18%, #000 34%, #000 76%, transparent 100%);
+      linear-gradient(90deg, transparent 0%, #000 34%),
+      linear-gradient(to top, transparent 0%, #000 26%);
     -webkit-mask-composite: source-in;
     mask-image:
-      linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.25) 18%, rgba(0, 0, 0, 0.75) 38%, #000 56%, #000 82%, transparent 100%),
-      linear-gradient(to top, transparent 0%, rgba(0, 0, 0, 0.65) 18%, #000 34%, #000 76%, transparent 100%);
+      linear-gradient(90deg, transparent 0%, #000 34%),
+      linear-gradient(to top, transparent 0%, #000 26%);
     mask-composite: intersect;
   }
 
   .hero__media::after {
-    display: block;
-    background:
-      radial-gradient(74% 72% at 56% 46%, rgba(40, 40, 43, 0) 32%, rgba(40, 40, 43, 0.65) 74%, var(--ink) 100%),
-      linear-gradient(90deg, var(--ink) 0%, rgba(40, 40, 43, 0.72) 14%, rgba(40, 40, 43, 0) 40%, rgba(40, 40, 43, 0) 78%, var(--ink) 100%),
-      linear-gradient(180deg, var(--ink) 0%, rgba(40, 40, 43, 0.5) 16%, rgba(40, 40, 43, 0) 32%, rgba(40, 40, 43, 0) 74%, var(--ink) 100%);
+    display: none;
   }
 
   .hero[data-hero-mode="video"] .hero__media::after {
     display: block;
-    background:
-      radial-gradient(72% 70% at 56% 46%, rgba(40, 40, 43, 0) 28%, rgba(40, 40, 43, 0.7) 72%, var(--ink) 100%),
-      linear-gradient(90deg, var(--ink) 0%, rgba(40, 40, 43, 0.8) 18%, rgba(40, 40, 43, 0) 44%, rgba(40, 40, 43, 0) 76%, var(--ink) 100%),
-      linear-gradient(180deg, var(--ink) 0%, rgba(40, 40, 43, 0.65) 18%, rgba(40, 40, 43, 0) 34%, rgba(40, 40, 43, 0) 72%, var(--ink) 100%);
+    background: linear-gradient(to bottom, rgba(40, 40, 43, 0.82) 0%, rgba(40, 40, 43, 0.32) 15%, rgba(40, 40, 43, 0) 28%);
   }
 
   .hero__switcher {
