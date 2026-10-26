@@ -17,7 +17,7 @@
   <link rel="preload" href="assets/fonts/manrope-cyrillic-400-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/fonts/manrope-cyrillic-500-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/img/hero-video-poster.jpg" as="image" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=19" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=20" />
   <script>document.documentElement.classList.add("js");</script>
 
   <script type="application/ld+json">
@@ -127,12 +127,6 @@
           fetchpriority="high"
         />
       </div>
-      <div class="hero__switcher" role="group" aria-label="Переключение версии первого экрана" data-hero-switcher>
-        <span class="hero__switcher-label">Обложка</span>
-        <button type="button" class="is-active" data-hero-set="video">Видео 1</button>
-        <button type="button" data-hero-set="video2">Видео 2</button>
-        <button type="button" data-hero-set="photo">Фото (прежняя)</button>
-      </div>
       <div class="wrap hero__inner">
         <div class="hero__main">
           <p class="eyebrow hero__eyebrow">REFACED · Санкт-Петербург</p>
@@ -143,11 +137,19 @@
             <a class="arrow-link" href="#boutiques">Наши бутики</a>
           </div>
         </div>
-        <ul class="hero__places">
-          <li><span>Мойка</span>наб. реки Мойки, 58</li>
-          <li><span>Петровский</span>Петровский пр., 22, корп. 2</li>
-          <li><span>Ежедневно</span>11:00–21:00</li>
-        </ul>
+        <div class="hero__foot">
+          <ul class="hero__places">
+            <li><span>Мойка</span>наб. реки Мойки, 58</li>
+            <li><span>Петровский</span>Петровский пр., 22, корп. 2</li>
+            <li><span>Ежедневно</span>11:00–21:00</li>
+          </ul>
+          <div class="hero__switcher" role="group" aria-label="Переключение версии первого экрана" data-hero-switcher>
+            <span class="hero__switcher-label">Обложка</span>
+            <button type="button" class="is-active" data-hero-set="video">Видео 1</button>
+            <button type="button" data-hero-set="video2">Видео 2</button>
+            <button type="button" data-hero-set="photo">Фото (прежняя)</button>
+          </div>
+        </div>
       </div>
       <a class="hero__scroll" href="#about" aria-label="Листать вниз"><i></i></a>
     </section>
@@ -704,6 +706,6 @@
     </div>
   </div>
 
-  <script type="module" src="assets/js/main.js?v=19"></script>
+  <script type="module" src="assets/js/main.js?v=20"></script>
 </body>
 </html>
