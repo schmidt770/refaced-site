@@ -102,7 +102,7 @@ function renderSuccess() {
   root.innerHTML = `
     <div class="booking__success">
       <p class="eyebrow">Запись подтверждена</p>
-      <h3>До встречи <em>в&nbsp;REFACED</em></h3>
+      <h3>До встречи в&nbsp;REFACED</h3>
       <p class="booking__when">${escapeHtml(booking.boutiqueName)}<br>${escapeHtml(
         humanDate(booking.date)
       )}, ${escapeHtml(booking.time)}</p>
