@@ -819,6 +819,37 @@ function initHeroSwitcher() {
   }
 }
 
+function initBgSwitcher() {
+  const root = document.documentElement;
+  const switcher = document.querySelector("[data-bg-switcher]");
+  const validModes = ["passepartout", "gradient", "monolith"];
+
+  const setBgMode = (mode) => {
+    const next = validModes.includes(mode) ? mode : "passepartout";
+    root.dataset.bgMode = next;
+    if (switcher) {
+      switcher.querySelectorAll("[data-bg-set]").forEach((btn) => {
+        const active = btn.dataset.bgSet === next;
+        btn.classList.toggle("is-active", active);
+        btn.setAttribute("aria-pressed", active ? "true" : "false");
+      });
+    }
+  };
+
+  if (switcher) {
+    switcher.querySelectorAll("[data-bg-set]").forEach((btn) => {
+      btn.addEventListener("click", () => setBgMode(btn.dataset.bgSet));
+    });
+  }
+
+  const urlBg = new URLSearchParams(window.location.search).get("bg");
+  if (validModes.includes(urlBg)) {
+    setBgMode(urlBg);
+  } else {
+    setBgMode(root.dataset.bgMode || "passepartout");
+  }
+}
+
 function initBookingLinks() {
   document.querySelectorAll("[data-book]").forEach((link) => {
     link.addEventListener("click", () => selectBoutique(link.dataset.book));
@@ -830,6 +861,7 @@ bindGoals();
 initHeader();
 initMenu();
 initHeroSwitcher();
+initBgSwitcher();
 initSliders();
 initTrustCarousel();
 initCatalog();

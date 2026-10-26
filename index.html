@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-bg-mode="passepartout">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -14,10 +14,11 @@
   <meta property="og:image" content="assets/img/hero-model.jpg" />
 
   <link rel="icon" href="assets/img/logo.png" />
-  <link rel="preload" href="assets/fonts/manrope-cyrillic-400-normal.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="preload" href="assets/fonts/manrope-cyrillic-500-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="assets/fonts/montserrat-cyrillic-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="assets/fonts/montserrat-cyrillic-500-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="assets/fonts/montserrat-cyrillic-600-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/img/hero-video-poster.jpg" as="image" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=20" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=22" />
   <script>document.documentElement.classList.add("js");</script>
 
   <script type="application/ld+json">
@@ -143,11 +144,19 @@
             <li><span>Петровский</span>Петровский пр., 22, корп. 2</li>
             <li><span>Ежедневно</span>11:00–21:00</li>
           </ul>
-          <div class="hero__switcher" role="group" aria-label="Переключение версии первого экрана" data-hero-switcher>
-            <span class="hero__switcher-label">Обложка</span>
-            <button type="button" class="is-active" data-hero-set="video">Видео 1</button>
-            <button type="button" data-hero-set="video2">Видео 2</button>
-            <button type="button" data-hero-set="photo">Фото (прежняя)</button>
+          <div class="hero__switchers">
+            <div class="hero__switcher" role="group" aria-label="Переключение версии первого экрана" data-hero-switcher>
+              <span class="hero__switcher-label">Обложка</span>
+              <button type="button" class="is-active" data-hero-set="video">Видео 1</button>
+              <button type="button" data-hero-set="video2">Видео 2</button>
+              <button type="button" data-hero-set="photo">Фото</button>
+            </div>
+            <div class="hero__switcher" role="group" aria-label="Переключение решения фона сайта" data-bg-switcher>
+              <span class="hero__switcher-label">Фон</span>
+              <button type="button" class="is-active" data-bg-set="passepartout">Паспарту</button>
+              <button type="button" data-bg-set="gradient">Градиент</button>
+              <button type="button" data-bg-set="monolith">Монолит</button>
+            </div>
           </div>
         </div>
       </div>
@@ -155,11 +164,12 @@
     </section>
 
     <!-- О НАС -->
-    <section class="section section--ink" id="about">
+    <section class="section section--ink section--to-ivory" id="about">
       <div class="wrap">
-        <div class="manifesto">
-          <p class="eyebrow" data-reveal>О REFACED</p>
-          <p class="manifesto__text" data-reveal>REFACED — два бутика премиальной оптики в&nbsp;центре Санкт-Петербурга с&nbsp;12-летней историей. Пространства, где мировые бренды встречаются с&nbsp;искусством и&nbsp;дизайном.</p>
+        <div class="section-head" data-reveal>
+          <p class="eyebrow">О REFACED</p>
+          <h2 class="section-head__title">REFACED — два бутика премиальной оптики в&nbsp;центре Санкт-Петербурга с&nbsp;12-летней историей</h2>
+          <p class="section-head__lead">Пространства, где мировые бренды встречаются с&nbsp;искусством и&nbsp;дизайном.</p>
         </div>
         <div class="about">
           <div class="about__media" data-reveal>
@@ -257,7 +267,7 @@
     </section>
 
     <!-- ЗАПИСЬ -->
-    <section class="section section--ink" id="booking">
+    <section class="section section--ink section--from-ivory section--to-ivory" id="booking">
       <div class="wrap booking-layout">
         <div class="booking-intro" data-reveal>
           <p class="eyebrow">Запись</p>
@@ -419,7 +429,7 @@
     </section>
 
     <!-- БУТИКИ -->
-    <section class="section section--ink" id="boutiques">
+    <section class="section section--ink section--from-ivory" id="boutiques">
       <div class="wrap">
         <div class="section-head" data-reveal>
           <p class="eyebrow">Бутики</p>
@@ -504,7 +514,7 @@
     </section>
 
     <!-- НАМ ДОВЕРЯЮТ -->
-    <section class="section section--ink section--trust" id="trusted">
+    <section class="section section--ink section--trust section--to-ivory" id="trusted">
       <div class="wrap">
         <div class="section-head section-head--split" data-reveal>
           <div>
@@ -590,12 +600,10 @@
     <!-- НОВОСТИ -->
     <section class="section section--ivory" id="news">
       <div class="wrap">
-        <div class="section-head section-head--split" data-reveal>
-          <div>
-            <p class="eyebrow">Новости</p>
-            <h2 class="section-head__title">События REFACED</h2>
-          </div>
-          <p class="news__intro">Встречи, события и&nbsp;жизнь пространств REFACED</p>
+        <div class="section-head" data-reveal>
+          <p class="eyebrow">Новости</p>
+          <h2 class="section-head__title">События REFACED</h2>
+          <p class="section-head__lead">Встречи, события и&nbsp;жизнь пространств REFACED.</p>
         </div>
         <div class="news">
           <article class="news-card" data-reveal>
@@ -624,7 +632,8 @@
             <h3>Ирина Оганова в&nbsp;REFACED</h3>
             <div class="news-card__body">
               <p>В&nbsp;бутике на&nbsp;Петровском острове прошла встреча с&nbsp;писательницей и&nbsp;искусствоведом Ириной Огановой.</p>
-              <p>Познакомили друзей бренда с&nbsp;новым пространством, говорили о&nbsp;книгах, личных историях и&nbsp;Петербурге. Вечер объединил единомышленников, интересные разговоры и&nbsp;новые знакомства — именно за&nbsp;такую атмосферу мы&nbsp;любим встречи в&nbsp;бутике.</p>
+              <p>Познакомили друзей бренда с&nbsp;новым пространством, говорили о&nbsp;книгах, личных историях и&nbsp;Петербурге.</p>
+              <p>Вечер объединил единомышленников, интересные разговоры и&nbsp;новые знакомства — именно за&nbsp;такую атмосферу мы&nbsp;любим встречи в&nbsp;бутике.</p>
               <p class="news-card__note">Полный фотоотчёт — в&nbsp;нашем Telegram-канале.</p>
             </div>
           </article>
@@ -706,6 +715,6 @@
     </div>
   </div>
 
-  <script type="module" src="assets/js/main.js?v=20"></script>
+  <script type="module" src="assets/js/main.js?v=22"></script>
 </body>
 </html>
