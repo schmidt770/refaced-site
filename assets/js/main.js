@@ -786,25 +786,25 @@ function initHeroSwitcher() {
 
   const items = hero.querySelectorAll("[data-hero-item]");
   const buttons = switcher.querySelectorAll("[data-hero-set]");
-  const videoEl = hero.querySelector('video[data-hero-item="video"]');
 
   const setMode = (mode) => {
     hero.dataset.heroMode = mode;
     items.forEach((el) => {
-      el.classList.toggle("is-active", el.dataset.heroItem === mode);
+      const isCurrent = el.dataset.heroItem === mode;
+      el.classList.toggle("is-active", isCurrent);
+      if (el.tagName === "VIDEO") {
+        if (isCurrent) {
+          el.play().catch(() => {});
+        } else {
+          el.pause();
+        }
+      }
     });
     buttons.forEach((btn) => {
       const active = btn.dataset.heroSet === mode;
       btn.classList.toggle("is-active", active);
       btn.setAttribute("aria-pressed", active ? "true" : "false");
     });
-    if (videoEl) {
-      if (mode === "video") {
-        videoEl.play().catch(() => {});
-      } else {
-        videoEl.pause();
-      }
-    }
   };
 
   buttons.forEach((btn) => {
@@ -812,7 +812,7 @@ function initHeroSwitcher() {
   });
 
   const urlMode = new URLSearchParams(window.location.search).get("hero");
-  if (urlMode === "photo" || urlMode === "video") {
+  if (urlMode === "photo" || urlMode === "video" || urlMode === "video2") {
     setMode(urlMode);
   } else {
     setMode(hero.dataset.heroMode || "video");

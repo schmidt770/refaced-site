@@ -17,7 +17,7 @@
   <link rel="preload" href="assets/fonts/manrope-cyrillic-400-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/fonts/manrope-cyrillic-500-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/img/hero-video-poster.jpg" as="image" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=17" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=19" />
   <script>document.documentElement.classList.add("js");</script>
 
   <script type="application/ld+json">
@@ -105,6 +105,18 @@
           playsinline
           preload="auto"
         ></video>
+        <video
+          class="hero__media-item"
+          data-hero-item="video2"
+          src="assets/img/hero-video-2.mp4"
+          poster="assets/img/hero-video-2-poster.jpg"
+          width="720"
+          height="1280"
+          muted
+          loop
+          playsinline
+          preload="metadata"
+        ></video>
         <img
           class="hero__media-item"
           data-hero-item="photo"
@@ -117,7 +129,8 @@
       </div>
       <div class="hero__switcher" role="group" aria-label="Переключение версии первого экрана" data-hero-switcher>
         <span class="hero__switcher-label">Обложка</span>
-        <button type="button" class="is-active" data-hero-set="video">Видео (новая)</button>
+        <button type="button" class="is-active" data-hero-set="video">Видео 1</button>
+        <button type="button" data-hero-set="video2">Видео 2</button>
         <button type="button" data-hero-set="photo">Фото (прежняя)</button>
       </div>
       <div class="wrap hero__inner">
@@ -691,6 +704,6 @@
     </div>
   </div>
 
-  <script type="module" src="assets/js/main.js?v=17"></script>
+  <script type="module" src="assets/js/main.js?v=19"></script>
 </body>
 </html>
