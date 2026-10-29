@@ -812,7 +812,7 @@ function initHeroSwitcher() {
   });
 
   const urlMode = new URLSearchParams(window.location.search).get("hero");
-  if (urlMode === "photo" || urlMode === "video" || urlMode === "video2") {
+  if (urlMode === "photo" || urlMode === "video") {
     setMode(urlMode);
   } else {
     setMode(hero.dataset.heroMode || "video");

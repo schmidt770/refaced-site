@@ -18,7 +18,7 @@
   <link rel="preload" href="assets/fonts/montserrat-cyrillic-500-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/fonts/montserrat-cyrillic-600-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/img/hero-video-poster.jpg" as="image" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=22" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=23" />
   <script>document.documentElement.classList.add("js");</script>
 
   <script type="application/ld+json">
@@ -106,18 +106,6 @@
           playsinline
           preload="auto"
         ></video>
-        <video
-          class="hero__media-item"
-          data-hero-item="video2"
-          src="assets/img/hero-video-2.mp4"
-          poster="assets/img/hero-video-2-poster.jpg"
-          width="720"
-          height="1280"
-          muted
-          loop
-          playsinline
-          preload="metadata"
-        ></video>
         <img
           class="hero__media-item"
           data-hero-item="photo"
@@ -147,8 +135,7 @@
           <div class="hero__switchers">
             <div class="hero__switcher" role="group" aria-label="Переключение версии первого экрана" data-hero-switcher>
               <span class="hero__switcher-label">Обложка</span>
-              <button type="button" class="is-active" data-hero-set="video">Видео 1</button>
-              <button type="button" data-hero-set="video2">Видео 2</button>
+              <button type="button" class="is-active" data-hero-set="video">Видео</button>
               <button type="button" data-hero-set="photo">Фото</button>
             </div>
             <div class="hero__switcher" role="group" aria-label="Переключение решения фона сайта" data-bg-switcher>
@@ -715,6 +702,6 @@
     </div>
   </div>
 
-  <script type="module" src="assets/js/main.js?v=22"></script>
+  <script type="module" src="assets/js/main.js?v=23"></script>
 </body>
 </html>
