@@ -1,5 +1,5 @@
-import { mountBooking, selectBoutique } from "./booking.js";
-import { initMetrika, bindGoals } from "./metrika.js";
+import { mountBooking, selectBoutique } from "./booking.js?v=26";
+import { initMetrika, bindGoals } from "./metrika.js?v=26";
 
 const priceFormat = new Intl.NumberFormat("ru-RU");
 
@@ -84,9 +84,61 @@ function initSliders() {
       startX = null;
       if (Math.abs(delta) > 40) show(index + (delta < 0 ? 1 : -1));
     });
-    track.addEventListener("pointercancel", () => {
+    slider.addEventListener("pointercancel", () => {
       startX = null;
     });
+  });
+}
+
+function initVideoCards() {
+  const autoplayObserver =
+    "IntersectionObserver" in window
+      ? new IntersectionObserver(
+          (entries) => {
+            entries.forEach(({ target: video, isIntersecting }) => {
+              if (isIntersecting && !video.dataset.userPaused) video.play().catch(() => {});
+              else if (!isIntersecting && !video.paused) video.pause();
+            });
+          },
+          { threshold: 0.25 }
+        )
+      : null;
+
+  document.querySelectorAll("[data-video-card]").forEach((card) => {
+    const video = card.querySelector("video");
+    const playBtn = card.querySelector("[data-video-play]");
+    const muteBtn = card.querySelector("[data-video-mute]");
+    if (!video) return;
+
+    const updateUi = () => {
+      if (playBtn) playBtn.textContent = video.paused ? "▶" : "❚❚";
+      if (muteBtn) muteBtn.textContent = video.muted ? "🔇" : "🔊";
+    };
+
+    const togglePlay = () => {
+      if (video.paused) {
+        delete video.dataset.userPaused;
+        video.play().catch(() => {});
+      } else {
+        video.dataset.userPaused = "true";
+        video.pause();
+      }
+      updateUi();
+    };
+
+    video.addEventListener("click", togglePlay);
+    video.addEventListener("play", updateUi);
+    video.addEventListener("pause", updateUi);
+    if (playBtn) playBtn.addEventListener("click", togglePlay);
+    if (muteBtn) {
+      muteBtn.addEventListener("click", () => {
+        video.muted = !video.muted;
+        updateUi();
+      });
+    }
+    updateUi();
+    if (autoplayObserver) autoplayObserver.observe(video);
+    else video.play().catch(() => {});
   });
 }
 
@@ -779,77 +831,6 @@ function initTrustCarousel() {
   });
 }
 
-function initHeroSwitcher() {
-  const hero = document.querySelector(".hero[data-hero-mode]");
-  const switcher = document.querySelector("[data-hero-switcher]");
-  if (!hero || !switcher) return;
-
-  const items = hero.querySelectorAll("[data-hero-item]");
-  const buttons = switcher.querySelectorAll("[data-hero-set]");
-
-  const setMode = (mode) => {
-    hero.dataset.heroMode = mode;
-    items.forEach((el) => {
-      const isCurrent = el.dataset.heroItem === mode;
-      el.classList.toggle("is-active", isCurrent);
-      if (el.tagName === "VIDEO") {
-        if (isCurrent) {
-          el.play().catch(() => {});
-        } else {
-          el.pause();
-        }
-      }
-    });
-    buttons.forEach((btn) => {
-      const active = btn.dataset.heroSet === mode;
-      btn.classList.toggle("is-active", active);
-      btn.setAttribute("aria-pressed", active ? "true" : "false");
-    });
-  };
-
-  buttons.forEach((btn) => {
-    btn.addEventListener("click", () => setMode(btn.dataset.heroSet));
-  });
-
-  const urlMode = new URLSearchParams(window.location.search).get("hero");
-  if (urlMode === "photo" || urlMode === "video") {
-    setMode(urlMode);
-  } else {
-    setMode(hero.dataset.heroMode || "video");
-  }
-}
-
-function initBgSwitcher() {
-  const root = document.documentElement;
-  const switcher = document.querySelector("[data-bg-switcher]");
-  const validModes = ["passepartout", "gradient", "monolith"];
-
-  const setBgMode = (mode) => {
-    const next = validModes.includes(mode) ? mode : "passepartout";
-    root.dataset.bgMode = next;
-    if (switcher) {
-      switcher.querySelectorAll("[data-bg-set]").forEach((btn) => {
-        const active = btn.dataset.bgSet === next;
-        btn.classList.toggle("is-active", active);
-        btn.setAttribute("aria-pressed", active ? "true" : "false");
-      });
-    }
-  };
-
-  if (switcher) {
-    switcher.querySelectorAll("[data-bg-set]").forEach((btn) => {
-      btn.addEventListener("click", () => setBgMode(btn.dataset.bgSet));
-    });
-  }
-
-  const urlBg = new URLSearchParams(window.location.search).get("bg");
-  if (validModes.includes(urlBg)) {
-    setBgMode(urlBg);
-  } else {
-    setBgMode(root.dataset.bgMode || "passepartout");
-  }
-}
-
 function initBookingLinks() {
   document.querySelectorAll("[data-book]").forEach((link) => {
     link.addEventListener("click", () => selectBoutique(link.dataset.book));
@@ -860,9 +841,8 @@ initMetrika();
 bindGoals();
 initHeader();
 initMenu();
-initHeroSwitcher();
-initBgSwitcher();
 initSliders();
+initVideoCards();
 initTrustCarousel();
 initCatalog();
 initBookingLinks();

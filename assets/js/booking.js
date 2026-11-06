@@ -1,8 +1,8 @@
 // Запись на диагностику: бутик → дата → время → имя/телефон.
 // Логика — из Mini App (optics-bot/webapp/static/booking.js), без Telegram.
 
-import { DEMO, getBoutiques, getSlots, createBooking } from "./booking-api.js";
-import { reachGoal } from "./metrika.js";
+import { DEMO, getBoutiques, getSlots, createBooking } from "./booking-api.js?v=26";
+import { reachGoal } from "./metrika.js?v=26";
 
 const WEEKDAYS = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"];
 const MONTHS = [
@@ -113,6 +113,7 @@ function renderSuccess() {
   root.querySelector("#booking-again").onclick = () => {
     state.success = null;
     state.time = null;
+    state.consent = false;
     loadSlots();
   };
 }
@@ -186,7 +187,7 @@ function render() {
       </div>
       <label class="consent">
         <input type="checkbox" id="booking-consent" ${state.consent ? "checked" : ""} />
-        <span>Согласен на обработку персональных данных</span>
+        <span>Соглашаюсь на&nbsp;<a href="consent.html" target="_blank" rel="noopener">обработку персональных данных</a> в&nbsp;соответствии с&nbsp;<a href="privacy.html" target="_blank" rel="noopener">политикой конфиденциальности</a></span>
       </label>
     </div>
 
