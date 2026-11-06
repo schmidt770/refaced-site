@@ -19,6 +19,7 @@ const state = {
   name: "",
   phone: "",
   consent: false,
+  marketingConsent: false,
   busy: false,
   error: "",
   success: null,
@@ -114,6 +115,7 @@ function renderSuccess() {
     state.success = null;
     state.time = null;
     state.consent = false;
+    state.marketingConsent = false;
     loadSlots();
   };
 }
@@ -189,6 +191,10 @@ function render() {
         <input type="checkbox" id="booking-consent" ${state.consent ? "checked" : ""} />
         <span>Соглашаюсь на&nbsp;<a href="consent.html" target="_blank" rel="noopener">обработку персональных данных</a> в&nbsp;соответствии с&nbsp;<a href="privacy.html" target="_blank" rel="noopener">политикой конфиденциальности</a></span>
       </label>
+      <label class="consent">
+        <input type="checkbox" id="booking-marketing" ${state.marketingConsent ? "checked" : ""} />
+        <span>Соглашаюсь получать <a href="marketing-consent.html" target="_blank" rel="noopener">рекламные и&nbsp;информационные рассылки</a> REFACED&nbsp;— о&nbsp;новых коллекциях, событиях и&nbsp;специальных предложениях</span>
+      </label>
     </div>
 
     ${state.error ? `<p class="booking__error">${escapeHtml(state.error)}</p>` : ""}
@@ -216,9 +222,11 @@ function render() {
   const name = root.querySelector("#booking-name");
   const phone = root.querySelector("#booking-phone");
   const consent = root.querySelector("#booking-consent");
+  const marketing = root.querySelector("#booking-marketing");
   name.oninput = () => (state.name = name.value);
   phone.oninput = () => (state.phone = phone.value);
   consent.onchange = () => (state.consent = consent.checked);
+  marketing.onchange = () => (state.marketingConsent = marketing.checked);
   root.querySelector("#booking-submit").onclick = submit;
 }
 
@@ -247,6 +255,7 @@ async function submit() {
       time: state.time,
       name: state.name.trim(),
       phone: state.phone.trim(),
+      marketingConsent: state.marketingConsent,
     });
     state.busy = false;
     if (!result.ok) {

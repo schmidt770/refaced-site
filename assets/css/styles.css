@@ -2223,6 +2223,10 @@ body.menu-open .menu__nav a:nth-child(7) { transition-delay: 0.3s; }
   text-decoration-color: currentColor;
 }
 
+.consent + .consent {
+  margin-top: 16px;
+}
+
 .booking__error {
   margin: 24px 0 0;
   color: #e08a6d;
