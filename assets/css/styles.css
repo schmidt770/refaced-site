@@ -412,6 +412,16 @@ body.menu-open .menu__nav a:nth-child(7) { transition-delay: 0.3s; }
   text-decoration: none;
 }
 
+.menu__foot .menu__tg {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 14px 0;
+  color: var(--brass-light);
+  font: 600 12px/1.4 var(--sans);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
 /* ---------- обложка ---------- */
 
 .hero {
@@ -1105,11 +1115,22 @@ body.menu-open .menu__nav a:nth-child(7) { transition-delay: 0.3s; }
 }
 
 .boutique__actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 18px 34px;
+  display: grid;
+  gap: 12px;
   margin-top: 38px;
+}
+
+.boutique__route {
+  justify-content: center;
+  min-height: 54px;
+  padding: 0 24px;
+  border: 1px solid rgba(242, 237, 228, 0.38);
+  color: var(--ivory);
+  transition: border-color 0.4s var(--ease);
+}
+
+.boutique__route:hover {
+  border-color: var(--ivory);
 }
 
 /* ---------- слайдер ---------- */
@@ -1937,12 +1958,47 @@ body.menu-open .menu__nav a:nth-child(7) { transition-delay: 0.3s; }
 }
 
 .news-card__note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 60px;
   margin-top: auto !important;
   padding-top: 16px;
   border-top: 1px solid var(--line-light);
   color: var(--ink-text) !important;
   font: 500 14px/1.4 var(--sans) !important;
+  text-decoration: none;
   text-wrap: balance;
+}
+
+.news-card__note span {
+  text-decoration: underline;
+  text-decoration-color: var(--brass);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  transition: text-decoration-color 0.3s var(--ease);
+}
+
+.news-card__note::after {
+  content: "→";
+  flex: none;
+  margin-right: 4px;
+  color: var(--brass-dark);
+  transition: transform 0.4s var(--ease);
+}
+
+.news-card__note:hover span {
+  text-decoration-color: currentColor;
+}
+
+.news-card__note:hover::after {
+  transform: translateX(4px);
+}
+
+.news-card__note:focus-visible {
+  outline: 2px solid var(--brass-dark);
+  outline-offset: 4px;
 }
 
 /* ---------- запись ---------- */
@@ -2335,6 +2391,19 @@ body.menu-open .menu__nav a:nth-child(7) { transition-delay: 0.3s; }
   font-size: 15px;
 }
 
+.footer__tg {
+  display: inline-block;
+  padding: 12px 0;
+  color: var(--ivory);
+  text-decoration: underline;
+  text-decoration-color: var(--brass);
+  text-underline-offset: 4px;
+}
+
+.footer__tg:hover {
+  color: var(--brass-light);
+}
+
 .footer__col h3 {
   margin: 0 0 12px;
   color: var(--brass-light);
@@ -2466,6 +2535,18 @@ body.menu-open .menu__nav a:nth-child(7) { transition-delay: 0.3s; }
     scroll-padding-inline: 0;
     gap: 20px;
     grid-auto-columns: calc((100% - 40px) / 3);
+  }
+
+  .boutique__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 18px 34px;
+  }
+
+  .boutique__route {
+    padding: 0;
+    border: 0;
   }
 
   .news {

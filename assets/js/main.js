@@ -1,5 +1,5 @@
-import { mountBooking, selectBoutique } from "./booking.js?v=27";
-import { initMetrika, bindGoals } from "./metrika.js?v=26";
+import { mountBooking, selectBoutique } from "./booking.js?v=30";
+import { initMetrika, bindGoals } from "./metrika.js?v=30";
 
 const priceFormat = new Intl.NumberFormat("ru-RU");
 

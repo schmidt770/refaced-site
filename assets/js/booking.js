@@ -2,7 +2,7 @@
 // Логика — из Mini App (optics-bot/webapp/static/booking.js), без Telegram.
 
 import { DEMO, getBoutiques, getSlots, createBooking } from "./booking-api.js?v=26";
-import { reachGoal } from "./metrika.js?v=26";
+import { reachGoal } from "./metrika.js?v=30";
 
 const WEEKDAYS = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"];
 const MONTHS = [

@@ -28,7 +28,7 @@ export function reachGoal(name) {
   else console.debug("[metrika] goal", name);
 }
 
-// Цели из разметки: data-goal="phone_click" | "map_click" | "booking_open"
+// Цели из разметки: data-goal="phone_click" | "map_click" | "booking_open" | "telegram_click"
 export function bindGoals(root = document) {
   root.addEventListener("click", (event) => {
     const node = event.target.closest("[data-goal]");
