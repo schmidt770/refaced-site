@@ -75,6 +75,8 @@ function initSliders() {
 
     const track = slider.querySelector(".slider__track");
     let startX = null;
+    // Иначе браузер начинает перетаскивать картинку и отменяет свайп мышью.
+    track.addEventListener("dragstart", (event) => event.preventDefault());
     track.addEventListener("pointerdown", (event) => {
       startX = event.clientX;
     });
@@ -780,54 +782,102 @@ async function initCatalog() {
   resetAllFilters();
 }
 
-function initTrustCarousel() {
-  const track = document.querySelector("[data-trust-track]");
-  if (!track) return;
-  const prevBtn = document.querySelector("[data-trust-prev]");
-  const nextBtn = document.querySelector("[data-trust-next]");
+// Перетаскивание мышью только с data-carousel-drag: в «Событиях» оно конфликтует со свайпом фото внутри карточек.
+function initCarousels() {
+  document.querySelectorAll("[data-carousel]").forEach((root) => {
+    const track = root.querySelector("[data-carousel-track]");
+    if (!track) return;
+    const prevBtn = root.querySelector("[data-carousel-prev]");
+    const nextBtn = root.querySelector("[data-carousel-next]");
+    const counter = root.querySelector("[data-carousel-count]");
+    const cards = [...track.children];
+    const byPage = track.dataset.carouselStep === "page";
+    const pad = (n) => String(n).padStart(2, "0");
 
-  const getStep = () => {
-    const firstCard = track.querySelector(".trust-card");
-    if (!firstCard) return 320;
-    const gap = parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap || "24") || 24;
-    return firstCard.getBoundingClientRect().width + gap;
-  };
+    const getGap = () => parseFloat(getComputedStyle(track).columnGap) || 0;
+    const getStep = () => (cards[0] ? cards[0].getBoundingClientRect().width + getGap() : 320);
+    const getMaxScroll = () => track.scrollWidth - track.clientWidth;
+    const getPerView = () => Math.max(1, Math.floor((track.clientWidth + getGap()) / getStep() + 0.02));
+    const getFirst = () => {
+      if (track.scrollLeft >= getMaxScroll() - 2) return Math.max(0, cards.length - getPerView());
+      return Math.round(track.scrollLeft / getStep());
+    };
 
-  if (prevBtn) {
-    prevBtn.addEventListener("click", () => {
-      track.scrollBy({ left: -getStep(), behavior: "smooth" });
+    const move = (dir) => {
+      if (!byPage) {
+        track.scrollBy({ left: dir * getStep(), behavior: "smooth" });
+        return;
+      }
+      const perView = getPerView();
+      const first = getFirst();
+      const page = dir > 0 ? Math.floor(first / perView) + 1 : Math.ceil(first / perView) - 1;
+      const index = Math.max(0, Math.min(page * perView, cards.length - perView));
+      track.scrollTo({ left: index * getStep(), behavior: "smooth" });
+    };
+
+    const update = () => {
+      const max = getMaxScroll();
+      if (prevBtn) prevBtn.setAttribute("aria-disabled", String(track.scrollLeft <= 2));
+      if (nextBtn) nextBtn.setAttribute("aria-disabled", String(track.scrollLeft >= max - 2));
+      if (counter) {
+        const first = getFirst();
+        const last = Math.min(cards.length, first + getPerView());
+        const range = last - first > 1 ? `${pad(first + 1)}–${pad(last)}` : pad(first + 1);
+        counter.innerHTML = `<b>${range}</b> / ${pad(cards.length)}`;
+      }
+    };
+
+    if (prevBtn) prevBtn.addEventListener("click", () => move(-1));
+    if (nextBtn) nextBtn.addEventListener("click", () => move(1));
+
+    track.addEventListener("keydown", (event) => {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      if (event.target !== track && !cards.includes(event.target)) return;
+      event.preventDefault();
+      move(event.key === "ArrowRight" ? 1 : -1);
     });
-  }
 
-  if (nextBtn) {
-    nextBtn.addEventListener("click", () => {
-      track.scrollBy({ left: getStep(), behavior: "smooth" });
+    let frame = 0;
+    track.addEventListener(
+      "scroll",
+      () => {
+        if (frame) return;
+        frame = requestAnimationFrame(() => {
+          frame = 0;
+          update();
+        });
+      },
+      { passive: true }
+    );
+    window.addEventListener("resize", update);
+    update();
+
+    if (!track.hasAttribute("data-carousel-drag")) return;
+
+    let isDown = false;
+    let startX = 0;
+    let startScroll = 0;
+
+    track.addEventListener("mousedown", (e) => {
+      if (e.button !== 0) return;
+      isDown = true;
+      startX = e.pageX;
+      startScroll = track.scrollLeft;
+      track.classList.add("is-dragging");
     });
-  }
 
-  let isDown = false;
-  let startX = 0;
-  let startScroll = 0;
+    window.addEventListener("mouseup", () => {
+      if (!isDown) return;
+      isDown = false;
+      track.classList.remove("is-dragging");
+    });
 
-  track.addEventListener("mousedown", (e) => {
-    if (e.button !== 0) return;
-    isDown = true;
-    startX = e.pageX;
-    startScroll = track.scrollLeft;
-    track.classList.add("is-dragging");
-  });
-
-  window.addEventListener("mouseup", () => {
-    if (!isDown) return;
-    isDown = false;
-    track.classList.remove("is-dragging");
-  });
-
-  track.addEventListener("mousemove", (e) => {
-    if (!isDown) return;
-    e.preventDefault();
-    const walk = e.pageX - startX;
-    track.scrollLeft = startScroll - walk;
+    track.addEventListener("mousemove", (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const walk = e.pageX - startX;
+      track.scrollLeft = startScroll - walk;
+    });
   });
 }
 
@@ -843,7 +893,7 @@ initHeader();
 initMenu();
 initSliders();
 initVideoCards();
-initTrustCarousel();
+initCarousels();
 initCatalog();
 initBookingLinks();
 mountBooking(document.getElementById("booking-root"));

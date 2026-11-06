@@ -18,7 +18,7 @@
   <link rel="preload" href="assets/fonts/montserrat-cyrillic-500-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/fonts/montserrat-cyrillic-600-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/img/hero-video-poster.jpg" as="image" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=27" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=28" />
   <script>document.documentElement.classList.add("js");</script>
 
   <script type="application/ld+json">
@@ -228,26 +228,24 @@
             <p class="lenses__lead">Линза решает, насколько комфортно вы&nbsp;видите, — не&nbsp;меньше, чем оправа.</p>
             <p class="lenses__text">Мы&nbsp;работаем с&nbsp;ведущими мировыми производителями оптических линз — ZEISS, SEIKO и&nbsp;Essilor.</p>
             <p class="lenses__text">Подбираем решения с&nbsp;учётом вашего рецепта, зрительных нагрузок и&nbsp;повседневных сценариев: от&nbsp;работы с&nbsp;документами до&nbsp;вождения автомобиля.</p>
-            <p class="eyebrow lenses__sub">Линзы под&nbsp;вашу задачу</p>
+            <p class="eyebrow lenses__sub">Под вашу задачу</p>
             <ul class="tasks">
-              <li><b>Линзы с&nbsp;покрытием blue blocker</b><span>Для тех, кто проводит много времени за&nbsp;экраном компьютера или телефона. Помогают снизить зрительное напряжение, воздействие синего света и&nbsp;поддерживать комфорт глаз в&nbsp;течение дня.</span></li>
-              <li><b>Офисные линзы</b><span>Для комфортного зрения при работе за&nbsp;компьютером, чтении и&nbsp;общении. Обеспечивают чёткость на&nbsp;близком и&nbsp;среднем расстоянии.</span></li>
-              <li><b>Прогрессивные линзы</b><span>Одна пара очков для чёткого зрения вдаль, на&nbsp;среднем расстоянии и&nbsp;вблизи. Плавный переход между зонами позволяет комфортно видеть на&nbsp;любых дистанциях без смены очков.</span></li>
+              <li><b>Целый день за&nbsp;компьютером</b><span>Офисные линзы и&nbsp;антиблик</span></li>
+              <li><b>Много за&nbsp;рулём</b><span>Дизайн для вождения и&nbsp;антиблик</span></li>
+              <li><b>Читать и&nbsp;работать вблизи</b><span>Очки для близи или прогрессивные</span></li>
+              <li><b>Часто на&nbsp;улице</b><span>Фотохром и&nbsp;защита от&nbsp;ультрафиолета</span></li>
+              <li><b>Ребёнку</b><span>Контроль миопии, а&nbsp;не&nbsp;просто чёткость</span></li>
             </ul>
             <a class="btn btn--brass lenses__cta" href="#booking" data-goal="booking_open">Записаться на&nbsp;диагностику</a>
           </div>
         </div>
-        <div class="indices" data-reveal>
-          <div class="indices__head">
-            <h3>Толщина линзы</h3>
-            <p>Чем выше индекс преломления, тем тоньше линза при той же силе. Разница между стандартом и&nbsp;1.74 по&nbsp;краю доходит до&nbsp;45%.</p>
-          </div>
-          <ol class="indices__list">
-            <li><b>1.5</b><span>Стандарт</span><small>до&nbsp;±2</small></li>
-            <li><b>1.6</b><span>Утончённые</span><small>±2&nbsp;…&nbsp;±4</small></li>
-            <li><b>1.67</b><span>Ультратонкие</span><small>±4&nbsp;…&nbsp;±6</small></li>
-            <li><b>1.74</b><span>Максимально тонкие</span><small>больше ±6</small></li>
-          </ol>
+        <div class="lens-types" data-reveal>
+          <h3 class="lens-types__title">Типы линз</h3>
+          <ul class="lens-types__list">
+            <li><b>Линзы с&nbsp;покрытием blue blocker</b><span>Для тех, кто проводит много времени за&nbsp;экраном компьютера или телефона. Помогают снизить зрительное напряжение, воздействие синего света и&nbsp;поддерживать комфорт глаз в&nbsp;течение дня.</span></li>
+            <li><b>Офисные линзы</b><span>Для комфортного зрения при работе за&nbsp;компьютером, чтении и&nbsp;общении. Обеспечивают чёткость на&nbsp;близком и&nbsp;среднем расстоянии.</span></li>
+            <li><b>Прогрессивные линзы</b><span>Одна пара очков для чёткого зрения вдаль, на&nbsp;среднем расстоянии и&nbsp;вблизи. Плавный переход между зонами позволяет комфортно видеть на&nbsp;любых дистанциях без смены очков.</span></li>
+          </ul>
         </div>
       </div>
     </section>
@@ -501,22 +499,22 @@
     </section>
 
     <!-- НАМ ДОВЕРЯЮТ -->
-    <section class="section section--ink section--trust section--to-ivory" id="trusted">
+    <section class="section section--ink section--trust section--to-ivory" id="trusted" data-carousel>
       <div class="wrap">
         <div class="section-head section-head--split" data-reveal>
           <div>
             <p class="eyebrow">Нам доверяют</p>
             <h2 class="section-head__title">REFACED доверяют</h2>
           </div>
-          <div class="trust__controls">
+          <div class="carousel-controls">
             <div class="slider__arrows">
-              <button type="button" data-trust-prev aria-label="Предыдущие гости">←</button>
-              <button type="button" data-trust-next aria-label="Следующие гости">→</button>
+              <button type="button" data-carousel-prev aria-label="Предыдущие гости">←</button>
+              <button type="button" data-carousel-next aria-label="Следующие гости">→</button>
             </div>
           </div>
         </div>
 
-        <div class="trust-carousel" data-trust-track data-reveal>
+        <div class="trust-carousel" data-carousel-track data-carousel-drag data-reveal>
           <article class="trust-card">
             <div class="trust-card__media">
               <img src="assets/img/trust/oganova.jpg" alt="Ирина Оганова в бутике REFACED" width="800" height="1000" loading="lazy" />
@@ -633,15 +631,24 @@
     </section>
 
     <!-- НОВОСТИ -->
-    <section class="section section--ivory" id="news">
+    <section class="section section--ivory" id="news" data-carousel>
       <div class="wrap">
-        <div class="section-head" data-reveal>
-          <p class="eyebrow">Новости</p>
-          <h2 class="section-head__title">События REFACED</h2>
-          <p class="section-head__lead">Встречи, события и&nbsp;жизнь пространств REFACED.</p>
+        <div class="section-head section-head--split" data-reveal>
+          <div>
+            <p class="eyebrow">Новости</p>
+            <h2 class="section-head__title">События REFACED</h2>
+            <p class="section-head__lead">Встречи, события и&nbsp;жизнь пространств REFACED.</p>
+          </div>
+          <div class="carousel-controls">
+            <span class="slider__count" data-carousel-count aria-live="polite"><b>01–03</b> / 08</span>
+            <div class="slider__arrows">
+              <button type="button" data-carousel-prev aria-label="Предыдущие события">←</button>
+              <button type="button" data-carousel-next aria-label="Следующие события">→</button>
+            </div>
+          </div>
         </div>
-        <div class="news">
-          <article class="news-card" data-reveal>
+        <div class="news" data-carousel-track data-carousel-step="page" data-reveal role="region" aria-label="Лента событий">
+          <article class="news-card" tabindex="0">
             <div class="slider slider--tall news-card__slider" data-video-card>
               <div class="slider__track">
                 <video
@@ -675,7 +682,7 @@
             </div>
           </article>
 
-          <article class="news-card" data-reveal>
+          <article class="news-card" tabindex="0">
             <div class="slider slider--tall news-card__slider" data-slider>
               <div class="slider__track">
                 <img class="is-active" src="assets/img/news/vision-1.jpg" alt="День заботы о зрении в REFACED на Петровском острове" width="682" height="1024" loading="lazy" />
@@ -705,7 +712,7 @@
             </div>
           </article>
 
-          <article class="news-card" data-reveal>
+          <article class="news-card" tabindex="0">
             <div class="slider slider--tall news-card__slider" data-slider>
               <div class="slider__track">
                 <img class="is-active" src="assets/img/news/oganova-1.jpg" alt="Ирина Оганова в бутике REFACED на Петровском острове" width="682" height="1024" loading="lazy" />
@@ -737,7 +744,7 @@
             </div>
           </article>
 
-          <article class="news-card" data-reveal>
+          <article class="news-card" tabindex="0">
             <div class="slider slider--tall news-card__slider" data-slider>
               <div class="slider__track">
                 <img class="is-active" src="assets/img/news/cocoshnik-1.jpg" alt="Съёмка осенней коллекции Cocoshnik: кепка и солнцезащитные очки из REFACED" width="682" height="1024" loading="lazy" />
@@ -762,7 +769,7 @@
             </div>
           </article>
 
-          <article class="news-card" data-reveal>
+          <article class="news-card" tabindex="0">
             <div class="slider slider--tall news-card__slider" data-video-card>
               <div class="slider__track">
                 <video
@@ -796,7 +803,7 @@
             </div>
           </article>
 
-          <article class="news-card" data-reveal>
+          <article class="news-card" tabindex="0">
             <div class="slider slider--tall news-card__slider">
               <div class="slider__track">
                 <img class="is-active" src="assets/img/news/golf-1.jpg" alt="Пакет REFACED и мячи гольф-клуба «Петергоф» на поле" width="821" height="1024" loading="lazy" />
@@ -814,7 +821,7 @@
             </div>
           </article>
 
-          <article class="news-card" data-reveal>
+          <article class="news-card" tabindex="0">
             <div class="slider slider--tall news-card__slider" data-slider>
               <div class="slider__track">
                 <img class="is-active" src="assets/img/news/moyka-presentation-1.jpg" alt="Гостья презентации новой коллекции в бутике REFACED на Мойке" width="682" height="1024" loading="lazy" />
@@ -837,7 +844,7 @@
             </div>
           </article>
 
-          <article class="news-card" data-reveal>
+          <article class="news-card" tabindex="0">
             <div class="slider slider--tall news-card__slider" data-slider>
               <div class="slider__track">
                 <img class="is-active" src="assets/img/news/osome2some-1.jpg" alt="Съёмка коллекции OSOME2SOME: оливковая куртка, голубой платок и солнцезащитные очки" width="750" height="1024" loading="lazy" />
@@ -908,6 +915,6 @@
     </div>
   </div>
 
-  <script type="module" src="assets/js/main.js?v=27"></script>
+  <script type="module" src="assets/js/main.js?v=28"></script>
 </body>
 </html>
