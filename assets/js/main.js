@@ -730,8 +730,8 @@ async function initCatalog() {
               data-pm-book="${escapeHtml(preferredBoutique)}"
               data-goal="booking_open"
             >Записаться на примерку</a>
-            <a href="tel:+78005004043" class="pm__phone" data-goal="phone_click">
-              Бронь по телефону: <b>8 (800) 500-40-43</b>
+            <a href="tel:+78005005043" class="pm__phone" data-goal="phone_click">
+              Бронь по телефону: <b>8 (800) 500-50-43</b>
             </a>
           </div>
         </div>
