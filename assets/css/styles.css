@@ -1853,7 +1853,7 @@ body.menu-open .menu__nav a:nth-child(7) { transition-delay: 0.3s; }
 .news {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 84%;
+  grid-auto-columns: 100%;
   gap: 18px;
   align-items: stretch;
   overflow-x: auto;
