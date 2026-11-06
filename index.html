@@ -18,7 +18,7 @@
   <link rel="preload" href="assets/fonts/montserrat-cyrillic-500-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/fonts/montserrat-cyrillic-600-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/img/hero-video-poster.jpg" as="image" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=26" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=27" />
   <script>document.documentElement.classList.add("js");</script>
 
   <script type="application/ld+json">
@@ -26,8 +26,30 @@
     "@context": "https://schema.org",
     "@graph": [
       {
+        "@type": "Organization",
+        "@id": "#organization",
+        "name": "REFACED",
+        "legalName": "Общество с ограниченной ответственностью «Рэбел АйВэр»",
+        "taxID": "7841502210",
+        "identifier": {
+          "@type": "PropertyValue",
+          "propertyID": "ОГРН",
+          "value": "1147847173704"
+        },
+        "email": "info@refaced.ru",
+        "telephone": "+7-800-500-40-43",
+        "address": {
+          "@type": "PostalAddress",
+          "postalCode": "197110",
+          "streetAddress": "Петровский пр., 22, корп. 2, строение 1",
+          "addressLocality": "Санкт-Петербург",
+          "addressCountry": "RU"
+        }
+      },
+      {
         "@type": "Optician",
         "name": "REFACED Мойка",
+        "parentOrganization": { "@id": "#organization" },
         "telephone": "+7-800-500-40-43",
         "openingHours": "Mo-Su 11:00-21:00",
         "address": {
@@ -40,6 +62,7 @@
       {
         "@type": "Optician",
         "name": "REFACED Петровский",
+        "parentOrganization": { "@id": "#organization" },
         "telephone": "+7-800-500-40-43",
         "openingHours": "Mo-Su 11:00-21:00",
         "address": {
@@ -869,6 +892,7 @@
       <div class="footer__legal">
         <span>© <span id="year">2026</span> REFACED</span>
         <a href="privacy.html">Политика конфиденциальности</a>
+        <span class="footer__requisites">ООО&nbsp;«Рэбел&nbsp;АйВэр» · ИНН&nbsp;7841502210 · ОГРН&nbsp;1147847173704</span>
       </div>
     </div>
   </footer>
