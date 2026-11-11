@@ -18,7 +18,18 @@
   <link rel="preload" href="assets/fonts/montserrat-cyrillic-500-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/fonts/montserrat-cyrillic-600-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/img/hero-video-poster.jpg" as="image" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=30" />
+  <script>
+    (function () {
+      var modes = ["passepartout", "gradient"];
+      var mode = new URLSearchParams(location.search).get("bg");
+      try {
+        if (modes.indexOf(mode) > -1) localStorage.setItem("refaced-bg", mode);
+        else mode = localStorage.getItem("refaced-bg");
+      } catch (e) {}
+      document.documentElement.setAttribute("data-bg-mode", modes.indexOf(mode) > -1 ? mode : "passepartout");
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/css/styles.css?v=31" />
   <script>document.documentElement.classList.add("js");</script>
 
   <script type="application/ld+json">
@@ -915,6 +926,13 @@
     </div>
   </footer>
 
+  <!-- ПЕРЕКЛЮЧАТЕЛЬ ФОНА: временно, для финального выбора заказчиком -->
+  <div class="bg-switcher" role="group" aria-label="Вариант фона сайта" data-bg-switcher>
+    <span class="bg-switcher__label" aria-hidden="true">Фон</span>
+    <button type="button" class="is-active" data-bg-set="passepartout" aria-pressed="true">Паспарту</button>
+    <button type="button" data-bg-set="gradient" aria-pressed="false">Градиент</button>
+  </div>
+
   <!-- КАРТОЧКА ТОВАРА -->
   <div class="product-modal" id="product-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="pm-title">
     <div class="product-modal__backdrop" data-pm-close></div>
@@ -926,6 +944,6 @@
     </div>
   </div>
 
-  <script type="module" src="assets/js/main.js?v=30"></script>
+  <script type="module" src="assets/js/main.js?v=31"></script>
 </body>
 </html>

@@ -817,6 +817,79 @@ body.menu-open .menu__nav a:nth-child(7) { transition-delay: 0.3s; }
   color: var(--ink-text);
 }
 
+/* Переключатель «Фон» — временный, для финального выбора заказчиком */
+.bg-switcher {
+  position: fixed;
+  left: calc(12px + env(safe-area-inset-left));
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 14;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid rgba(242, 237, 228, 0.22);
+  background: rgba(24, 24, 26, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+  transition: opacity 0.3s var(--ease), visibility 0.3s;
+}
+
+.bg-switcher__label {
+  padding: 0 8px 0 6px;
+  color: var(--muted-dark);
+  font: 500 10px/1 var(--sans);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.bg-switcher button {
+  min-height: 36px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: rgba(242, 237, 228, 0.82);
+  font: 500 10px/1 var(--sans);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.25s, color 0.25s;
+}
+
+.bg-switcher button:hover {
+  color: var(--ivory);
+}
+
+.bg-switcher button.is-active {
+  background: var(--brass);
+  color: var(--ink);
+}
+
+.bg-switcher button:focus-visible {
+  outline: 2px solid var(--brass-light);
+  outline-offset: 2px;
+}
+
+.bg-switcher.is-yielding,
+body.menu-open .bg-switcher,
+body.modal-open .bg-switcher,
+body:has(:is(input:not([type="checkbox"], [type="radio"]), select, textarea):focus) .bg-switcher {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Место под переключатель, чтобы он не закрывал последние ссылки подвала и кнопки первого экрана */
+body:has(.bg-switcher) .footer {
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+}
+
+@media (max-width: 759px) {
+  body:has(.bg-switcher) .hero__inner {
+    padding-bottom: calc(clamp(18px, 4vw, 72px) + 58px + env(safe-area-inset-bottom));
+  }
+}
+
 .section-head {
   margin-bottom: clamp(44px, 5.5vw, 72px);
 }
@@ -2484,6 +2557,22 @@ body.menu-open .menu__nav a:nth-child(7) { transition-delay: 0.3s; }
   .products {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 56px 20px;
+  }
+
+  .bg-switcher {
+    left: auto;
+    right: calc(24px + env(safe-area-inset-right));
+    bottom: calc(24px + env(safe-area-inset-bottom));
+    padding: 5px;
+  }
+
+  .bg-switcher__label,
+  .bg-switcher button {
+    font-size: 11px;
+  }
+
+  .bg-switcher button {
+    padding: 0 13px;
   }
 
   .catalog-top-bar {

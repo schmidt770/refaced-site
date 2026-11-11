@@ -815,14 +815,16 @@ function initCarousels() {
       track.scrollTo({ left: index * getStep(), behavior: "smooth" });
     };
 
+    let shown = 0;
+
     const update = () => {
       const max = getMaxScroll();
+      shown = getFirst();
       if (prevBtn) prevBtn.setAttribute("aria-disabled", String(track.scrollLeft <= 2));
       if (nextBtn) nextBtn.setAttribute("aria-disabled", String(track.scrollLeft >= max - 2));
       if (counter) {
-        const first = getFirst();
-        const last = Math.min(cards.length, first + getPerView());
-        const range = last - first > 1 ? `${pad(first + 1)}–${pad(last)}` : pad(first + 1);
+        const last = Math.min(cards.length, shown + getPerView());
+        const range = last - shown > 1 ? `${pad(shown + 1)}–${pad(last)}` : pad(shown + 1);
         counter.innerHTML = `<b>${range}</b> / ${pad(cards.length)}`;
       }
     };
@@ -850,6 +852,11 @@ function initCarousels() {
       { passive: true }
     );
     window.addEventListener("resize", update);
+    // Ширина карточек зависит от режима фона: возвращаемся к той же карточке.
+    document.addEventListener("bgmodechange", () => {
+      track.scrollTo({ left: shown * getStep(), behavior: "instant" });
+      update();
+    });
     update();
 
     if (!track.hasAttribute("data-carousel-drag")) return;
@@ -887,6 +894,70 @@ function initBookingLinks() {
   });
 }
 
+// Начальный режим ставит inline-скрипт в <head> (?bg= или localStorage) — ключ общий со всеми страницами.
+const BG_STORAGE_KEY = "refaced-bg";
+
+function initBgSwitcher() {
+  const root = document.documentElement;
+  const switcher = document.querySelector("[data-bg-switcher]");
+  if (!switcher) return;
+  const buttons = switcher.querySelectorAll("[data-bg-set]");
+
+  const render = (mode) => {
+    buttons.forEach((btn) => {
+      const active = btn.dataset.bgSet === mode;
+      btn.classList.toggle("is-active", active);
+      btn.setAttribute("aria-pressed", String(active));
+    });
+  };
+
+  const setBgMode = (mode) => {
+    if (mode === root.dataset.bgMode) return;
+    // Высота секций в режимах разная: держим в кадре тот же блок, что был перед глазами.
+    const anchor = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 3);
+    const before = anchor ? anchor.getBoundingClientRect().top : 0;
+    root.style.overflowAnchor = "none";
+    root.dataset.bgMode = mode;
+    render(mode);
+    document.dispatchEvent(new CustomEvent("bgmodechange"));
+    if (anchor) window.scrollBy({ top: anchor.getBoundingClientRect().top - before, behavior: "instant" });
+    requestAnimationFrame(() => root.style.removeProperty("overflow-anchor"));
+
+    try {
+      localStorage.setItem(BG_STORAGE_KEY, mode);
+    } catch {}
+    const url = new URL(window.location.href);
+    url.searchParams.set("bg", mode);
+    history.replaceState(history.state, "", url);
+  };
+
+  buttons.forEach((btn) => btn.addEventListener("click", () => setBgMode(btn.dataset.bgSet)));
+  render(root.dataset.bgMode);
+
+  // На невысоких экранах кнопки первого экрана опускаются к низу — переключатель уступает им место.
+  const heroActions = document.querySelector(".hero__actions");
+  if (!heroActions) return;
+  const heroControls = [...heroActions.querySelectorAll("a, button")];
+  let frame = 0;
+  const yieldToHero = () => {
+    frame = 0;
+    const p = switcher.getBoundingClientRect();
+    const covered = heroControls.some((control) => {
+      const a = control.getBoundingClientRect();
+      return a.bottom > p.top && a.top < p.bottom && a.right > p.left && a.left < p.right;
+    });
+    switcher.classList.toggle("is-yielding", covered);
+  };
+  const schedule = () => {
+    if (!frame) frame = requestAnimationFrame(yieldToHero);
+  };
+  window.addEventListener("scroll", schedule, { passive: true });
+  window.addEventListener("resize", schedule);
+  heroActions.addEventListener("animationend", schedule);
+  document.fonts.ready.then(schedule);
+  yieldToHero();
+}
+
 initMetrika();
 bindGoals();
 initHeader();
@@ -896,6 +967,7 @@ initVideoCards();
 initCarousels();
 initCatalog();
 initBookingLinks();
+initBgSwitcher();
 mountBooking(document.getElementById("booking-root"));
 reveal();
 document.getElementById("year").textContent = new Date().getFullYear();
